@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Mail, Lock, User, ArrowRight } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../../lib/supabase';
+import { Atlas, Fonts, Radii, Shadows, eyebrow, display, accentWord } from '../../constants/atlas';
 
 const RegisterScreen = () => {
   const router = useRouter();
@@ -15,31 +15,24 @@ const RegisterScreen = () => {
 
   const handleRegister = async () => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          full_name: fullName,
-        }
-      }
+      options: { data: { full_name: fullName } },
     });
-    
     if (error) {
       alert(error.message);
     } else {
-      alert('Registration successful! Please check your email for verification.');
+      alert('Check your email to verify your account.');
       router.replace('/(auth)/login');
     }
     setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: Platform.OS === 'web' ? window.location.origin : 'travel-app://'
-      }
+      options: { redirectTo: Platform.OS === 'web' ? window.location.origin : 'travel-app://' },
     });
     if (error) alert(error.message);
   };
@@ -47,49 +40,49 @@ const RegisterScreen = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.flex}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft color="#94a3b8" size={24} />
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.85}>
+              <ChevronLeft color={Atlas.paperDim} size={20} />
             </TouchableOpacity>
 
             <Animated.View entering={FadeInUp.duration(800)} style={styles.header}>
-              <Text style={styles.title}>Register</Text>
-              <Text style={styles.subtitle}>Forecast your next adventure with AI</Text>
+              <Text style={styles.eyebrow}>Join Atlas</Text>
+              <Text style={styles.title}>
+                Create <Text style={styles.titleAccent}>account.</Text>
+              </Text>
+              <Text style={styles.subtitle}>Plan together. Travel further. Free for groups up to four.</Text>
             </Animated.View>
 
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Full Name</Text>
+                <Text style={styles.label}>Full name</Text>
                 <View style={styles.inputWrapper}>
-                  <User color="#475569" size={20} />
+                  <User color={Atlas.paperFaint} size={18} />
                   <TextInput
                     value={fullName}
                     onChangeText={setFullName}
-                    placeholder="e.g. John Doe"
-                    placeholderTextColor="#475569"
+                    placeholder="e.g. Nico Linder"
+                    placeholderTextColor={Atlas.paperFaint}
                     style={styles.input}
-                    selectionColor="#818cf8"
+                    selectionColor={Atlas.amber}
                   />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address</Text>
+                <Text style={styles.label}>Email</Text>
                 <View style={styles.inputWrapper}>
-                  <Mail color="#475569" size={20} />
+                  <Mail color={Atlas.paperFaint} size={18} />
                   <TextInput
                     value={email}
                     onChangeText={setEmail}
                     placeholder="name@example.com"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor={Atlas.paperFaint}
                     style={styles.input}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    selectionColor="#818cf8"
+                    selectionColor={Atlas.amber}
                   />
                 </View>
               </View>
@@ -97,15 +90,15 @@ const RegisterScreen = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Password</Text>
                 <View style={styles.inputWrapper}>
-                  <Lock color="#475569" size={20} />
+                  <Lock color={Atlas.paperFaint} size={18} />
                   <TextInput
                     value={password}
                     onChangeText={setPassword}
                     placeholder="••••••••"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor={Atlas.paperFaint}
                     style={styles.input}
                     secureTextEntry
-                    selectionColor="#818cf8"
+                    selectionColor={Atlas.amber}
                   />
                 </View>
               </View>
@@ -113,34 +106,21 @@ const RegisterScreen = () => {
               <TouchableOpacity
                 onPress={handleRegister}
                 disabled={loading}
-                activeOpacity={0.8}
-                style={styles.submitButton}
+                activeOpacity={0.9}
+                style={[styles.submitButton, Shadows.amberGlow, loading && { opacity: 0.7 }]}
               >
-                <LinearGradient
-                  colors={['#818cf8', '#60a5fa', '#22d3ee']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonInner}
-                >
-                  <Text style={styles.submitButtonText}>{loading ? 'Creating...' : 'Initialize Account'}</Text>
-                  {!loading && <ArrowRight color="#ffffff" size={18} />}
-                </LinearGradient>
+                <Text style={styles.submitButtonText}>{loading ? 'Creating…' : 'Create account'}</Text>
+                {!loading && <ArrowRight color={Atlas.inkOnAmber} size={17} />}
               </TouchableOpacity>
 
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>OR</Text>
+                <Text style={styles.dividerText}>Or</Text>
                 <View style={styles.dividerLine} />
               </View>
 
-              <TouchableOpacity
-                onPress={handleGoogleLogin}
-                activeOpacity={0.8}
-                style={styles.googleButton}
-              >
-                <View style={styles.googleIconContainer}>
-                   <Text style={styles.googleG}>G</Text>
-                </View>
+              <TouchableOpacity onPress={handleGoogleLogin} activeOpacity={0.9} style={styles.googleButton}>
+                <Text style={styles.googleG}>G</Text>
                 <Text style={styles.googleButtonText}>Continue with Google</Text>
               </TouchableOpacity>
             </View>
@@ -148,7 +128,7 @@ const RegisterScreen = () => {
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                <Text style={styles.signInLink}>Sign In</Text>
+                <Text style={styles.signInLink}>Sign in</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -159,162 +139,59 @@ const RegisterScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
+  container: { flex: 1, backgroundColor: Atlas.ink },
+  safeArea: { flex: 1 },
+  flex: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingBottom: 32 },
+
   backButton: {
-    marginTop: 20,
-    marginBottom: 40,
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    marginTop: 16, marginBottom: 28,
+    width: 40, height: 40, borderRadius: Radii.r2,
+    backgroundColor: Atlas.ink2, borderWidth: 1, borderColor: Atlas.hairline,
+    alignItems: 'center', justifyContent: 'center',
   },
-  header: {
-    marginBottom: 48,
-    alignItems: 'center',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 48,
-    fontWeight: '900',
-    letterSpacing: -3,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#94a3b8',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  form: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    color: '#94a3b8',
-    fontSize: 13,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
+  header: { marginBottom: 28 },
+  eyebrow: { ...eyebrow, marginBottom: 10 },
+  title: { ...display(46), letterSpacing: -1.4 },
+  titleAccent: { ...accentWord, fontSize: 46, lineHeight: 46 },
+  subtitle: { marginTop: 12, fontFamily: Fonts.sans, fontSize: 14, color: Atlas.paperDim, lineHeight: 20 },
+
+  form: { gap: 16 },
+  inputGroup: { gap: 8 },
+  label: { fontFamily: Fonts.sans, fontSize: 12, fontWeight: '600', color: Atlas.paperMute, letterSpacing: 0.4 },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(10, 10, 10, 0.5)',
-    height: 52,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 15,
-    color: '#ffffff',
-    fontWeight: '500',
-    outlineStyle: 'none',
-  } as any,
-  submitButton: {
-    height: 54,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 12,
-  },
-  buttonInner: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Atlas.ink2,
+    height: 52, borderRadius: Radii.r2,
+    paddingHorizontal: 14,
+    borderWidth: 1, borderColor: Atlas.hairline,
     gap: 10,
   },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
+  input: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: Atlas.paper } as any,
+
+  submitButton: {
+    height: 54, borderRadius: Radii.r2, backgroundColor: Atlas.amber,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    marginTop: 8,
   },
-  footer: {
-    marginTop: 40,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  signInLink: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 8,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#1e293b',
-  },
-  dividerText: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
+  submitButtonText: { fontFamily: Fonts.sans, color: Atlas.inkOnAmber, fontSize: 15, fontWeight: '700' },
+
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Atlas.hairline },
+  dividerText: { fontFamily: Fonts.sans, color: Atlas.paperFaint, fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase' },
+
   googleButton: {
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+    height: 52, borderRadius: Radii.r2,
+    backgroundColor: 'rgba(245,239,230,0.06)',
+    borderWidth: 1, borderColor: 'rgba(245,239,230,0.18)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  googleIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleG: {
-    color: '#4285F4',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  googleButtonText: {
-    color: '#0a0a0a',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  googleG: { color: '#4285F4', fontSize: 16, fontWeight: '700', fontFamily: Fonts.sans },
+  googleButtonText: { fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 14, fontWeight: '600' },
+
+  footer: { marginTop: 28, flexDirection: 'row', justifyContent: 'center' },
+  footerText: { fontFamily: Fonts.sans, color: Atlas.paperMute, fontSize: 13 },
+  signInLink: { fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 13, fontWeight: '700' },
 });
 
 export default RegisterScreen;

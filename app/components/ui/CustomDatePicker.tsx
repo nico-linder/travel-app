@@ -36,11 +36,11 @@ export const CustomDatePicker = ({ startDate, endDate, onSelect }: CustomDatePic
     return (
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}>
-          <ChevronLeft color="#94a3b8" size={20} />
+          <ChevronLeft color="#C9C0B2" size={20} />
         </TouchableOpacity>
         <Text style={styles.monthTitle}>{monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}</Text>
         <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}>
-          <ChevronRight color="#94a3b8" size={20} />
+          <ChevronRight color="#C9C0B2" size={20} />
         </TouchableOpacity>
       </View>
     );
@@ -137,11 +137,11 @@ export const CustomDatePicker = ({ startDate, endDate, onSelect }: CustomDatePic
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   header: {
     flexDirection: 'row',
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   monthTitle: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dayLabel: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 12,
     fontWeight: '700',
     width: (width - 120) / 7,
@@ -178,23 +178,23 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   dayText: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 14,
     fontWeight: '600',
   },
   selectedDay: {
-    backgroundColor: '#818cf8',
+    backgroundColor: '#E8A85C',
     borderRadius: 12,
   },
   selectedDayText: {
-    color: '#ffffff',
-    fontWeight: '800',
+    color: '#1A1410',
+    fontWeight: '700',
   },
   rangeDay: {
-    backgroundColor: 'rgba(129, 140, 248, 0.15)',
+    backgroundColor: 'rgba(232, 168, 92, 0.18)',
   },
   rangeDayText: {
-    color: '#818cf8',
+    color: '#E8A85C',
   },
   startDay: {
     borderTopLeftRadius: 12,
@@ -210,11 +210,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   todayText: {
-    color: '#818cf8',
+    color: '#E8A85C',
     fontWeight: '800',
   },
   pastDayText: {
-    color: '#1e293b',
-    opacity: 0.5,
+    color: '#5A5448',
+    opacity: 0.6,
   },
 });

@@ -5,6 +5,7 @@ import { ChevronLeft, Search, MapPin, Sparkles, Navigation, ArrowRight } from 'l
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { openTripMapService, OTMPlace } from '../../services/openTripMap';
 import { Skeleton } from '../../components/Skeleton';
+import { Atlas, Fonts, Radii, eyebrow } from '../../constants/atlas';
 
 const SearchLocationScreen = () => {
   const { name } = useLocalSearchParams<{ name: string }>();
@@ -59,20 +60,20 @@ const SearchLocationScreen = () => {
         <View style={styles.content}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft color="#94a3b8" size={24} />
+              <ChevronLeft color={Atlas.paperDim} size={24} />
             </TouchableOpacity>
             <View style={styles.searchWrapper}>
-              <Search color="#475569" size={18} />
+              <Search color={Atlas.paperFaint} size={18} />
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 onSubmitEditing={() => handleSearch(searchQuery)}
                 placeholder="Search location..."
-                placeholderTextColor="#475569"
+                placeholderTextColor={Atlas.paperFaint}
                 style={styles.searchInput}
-                selectionColor="#818cf8"
+                selectionColor={Atlas.amber}
               />
-              {loading && <ActivityIndicator size="small" color="#818cf8" />}
+              {loading && <ActivityIndicator size="small" color={Atlas.amber} />}
             </View>
           </View>
 
@@ -87,7 +88,7 @@ const SearchLocationScreen = () => {
                       onPress={() => router.replace('/(tabs)')}
                     >
                       <View style={styles.placeIconContainer}>
-                        <MapPin color="#818cf8" size={18} />
+                        <MapPin color={Atlas.amber} size={18} />
                       </View>
                       <View style={styles.placeInfo}>
                         <Text style={styles.placeName}>{place.name}</Text>
@@ -105,7 +106,7 @@ const SearchLocationScreen = () => {
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Popular Suggestions</Text>
-                    <Sparkles size={14} color="#818cf8" />
+                    <Sparkles size={14} color={Atlas.amber} />
                   </View>
                   
                   {loadingPopular ? (
@@ -122,7 +123,7 @@ const SearchLocationScreen = () => {
                           onPress={() => router.replace('/(tabs)')}
                         >
                           <View style={styles.placeIconContainer}>
-                            <Navigation color="#3b82f6" size={18} />
+                            <Navigation color={Atlas.teal} size={18} />
                           </View>
                           <View style={styles.placeInfo}>
                             <Text style={styles.placeName}>{place.name}</Text>
@@ -130,7 +131,7 @@ const SearchLocationScreen = () => {
                               {(place.kinds || '').split(',').slice(0, 2).join(' • ').replace(/_/g, ' ')}
                             </Text>
                           </View>
-                          <ArrowRight color="#334155" size={18} />
+                          <ArrowRight color={Atlas.paperFaint} size={18} />
                         </TouchableOpacity>
                       </Animated.View>
                     ))
@@ -147,110 +148,43 @@ const SearchLocationScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 32,
-    gap: 12,
-  },
+  container: { flex: 1, backgroundColor: Atlas.ink },
+  safeArea: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 24 },
+  header: { flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 28, gap: 12 },
   backButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    width: 40, height: 40, borderRadius: Radii.r2,
+    backgroundColor: Atlas.ink2, borderWidth: 1, borderColor: Atlas.hairline,
+    alignItems: 'center', justifyContent: 'center',
   },
   searchWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    height: 52,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: Atlas.ink2,
+    height: 48, borderRadius: Radii.r2,
+    paddingHorizontal: 14,
+    borderWidth: 1, borderColor: Atlas.hairline,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '500',
-    outlineStyle: 'none',
-  } as any,
-  scroll: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: '#64748b',
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    fontSize: 10,
-  },
+  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Atlas.paper } as any,
+  scroll: { flex: 1 },
+  section: { marginBottom: 28 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8 },
+  sectionTitle: { ...eyebrow },
   placeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Atlas.ink2, padding: 14, borderRadius: Radii.r3,
+    marginBottom: 10,
+    borderWidth: 1, borderColor: Atlas.hairline,
   },
   placeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 40, height: 40, borderRadius: Radii.r2,
+    backgroundColor: Atlas.ink3,
+    alignItems: 'center', justifyContent: 'center',
     marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    borderWidth: 1, borderColor: Atlas.hairline,
   },
-  placeInfo: {
-    flex: 1,
-  },
-  placeName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 2,
-  },
-  placeKinds: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+  placeInfo: { flex: 1 },
+  placeName: { fontFamily: Fonts.serif, fontSize: 18, color: Atlas.paper, letterSpacing: -0.3, marginBottom: 2 },
+  placeKinds: { fontFamily: Fonts.sans, fontSize: 11, color: Atlas.paperMute, textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: '600' },
 });
 
 export default SearchLocationScreen;

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ArrowRight } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
+import { Atlas, Fonts, Radii, Shadows, eyebrow, display, accentWord } from '../../constants/atlas';
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -26,11 +26,9 @@ const LoginScreen = () => {
   };
 
   const handleGoogleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: Platform.OS === 'web' ? window.location.origin : 'travel-app://'
-      }
+      options: { redirectTo: Platform.OS === 'web' ? window.location.origin : 'travel-app://' },
     });
     if (error) alert(error.message);
   };
@@ -38,80 +36,65 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.content}
-        >
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft color="#94a3b8" size={24} />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.85}>
+            <ChevronLeft color={Atlas.paperDim} size={20} />
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Sign In</Text>
-            <Text style={styles.subtitle}>Forecast your next journey's cost with AI</Text>
+            <Text style={styles.eyebrow}>Welcome back</Text>
+            <Text style={styles.title}>
+              Sign <Text style={styles.titleAccent}>in.</Text>
+            </Text>
+            <Text style={styles.subtitle}>Pick up where your group left off.</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Origin (Email)</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
-                placeholder="e.g. name@example.com"
-                placeholderTextColor="#475569"
+                placeholder="name@example.com"
+                placeholderTextColor={Atlas.paperFaint}
                 style={styles.input}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                selectionColor="#818cf8"
+                selectionColor={Atlas.amber}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Destination (Password)</Text>
+              <Text style={styles.label}>Password</Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"
-                placeholderTextColor="#475569"
+                placeholderTextColor={Atlas.paperFaint}
                 style={styles.input}
                 secureTextEntry
-                selectionColor="#818cf8"
+                selectionColor={Atlas.amber}
               />
             </View>
 
             <TouchableOpacity
               onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.8}
-              style={styles.submitButton}
+              activeOpacity={0.9}
+              style={[styles.submitButton, Shadows.amberGlow, loading && { opacity: 0.7 }]}
             >
-              <LinearGradient
-                colors={['#818cf8', '#60a5fa', '#22d3ee']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.buttonInner}
-              >
-                <Text style={styles.submitButtonText}>
-                  {loading ? 'Authenticating...' : 'Get Analysis'}
-                </Text>
-                {!loading && <ArrowRight color="#ffffff" size={18} />}
-              </LinearGradient>
+              <Text style={styles.submitButtonText}>{loading ? 'Signing in…' : 'Continue'}</Text>
+              {!loading && <ArrowRight color={Atlas.inkOnAmber} size={17} />}
             </TouchableOpacity>
 
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
+              <Text style={styles.dividerText}>Or</Text>
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity
-              onPress={handleGoogleLogin}
-              activeOpacity={0.8}
-              style={styles.googleButton}
-            >
-              <View style={styles.googleIconContainer}>
-                 <Text style={styles.googleG}>G</Text>
-              </View>
+            <TouchableOpacity onPress={handleGoogleLogin} activeOpacity={0.9} style={styles.googleButton}>
+              <Text style={styles.googleG}>G</Text>
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
@@ -129,153 +112,57 @@ const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
+  container: { flex: 1, backgroundColor: Atlas.ink },
+  safeArea: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 24 },
+
   backButton: {
-    marginTop: 20,
-    marginBottom: 40,
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    marginTop: 16, marginBottom: 32,
+    width: 40, height: 40, borderRadius: Radii.r2,
+    backgroundColor: Atlas.ink2, borderWidth: 1, borderColor: Atlas.hairline,
+    alignItems: 'center', justifyContent: 'center',
   },
-  header: {
-    marginBottom: 48,
-    alignItems: 'center',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 48,
-    fontWeight: '900',
-    letterSpacing: -3,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#94a3b8',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  form: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    color: '#94a3b8',
-    fontSize: 13,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
+  header: { marginBottom: 32 },
+  eyebrow: { ...eyebrow, marginBottom: 10 },
+  title: { ...display(48), letterSpacing: -1.4 },
+  titleAccent: { ...accentWord, fontSize: 48, lineHeight: 48 },
+  subtitle: { marginTop: 12, fontFamily: Fonts.sans, fontSize: 15, color: Atlas.paperDim },
+
+  form: { gap: 16 },
+  inputGroup: { gap: 8 },
+  label: { fontFamily: Fonts.sans, fontSize: 12, fontWeight: '600', color: Atlas.paperMute, marginLeft: 2, letterSpacing: 0.4 },
   input: {
-    backgroundColor: 'rgba(10, 10, 10, 0.5)',
-    height: 52,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    color: '#ededed',
-    fontSize: 15,
-    fontWeight: '500',
-    outlineStyle: 'none',
+    backgroundColor: Atlas.ink2,
+    height: 52, borderRadius: Radii.r2,
+    paddingHorizontal: 14,
+    borderWidth: 1, borderColor: Atlas.hairline,
+    color: Atlas.paper,
+    fontFamily: Fonts.sans, fontSize: 15,
   } as any,
+
   submitButton: {
-    height: 54,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 12,
+    height: 54, borderRadius: Radii.r2, backgroundColor: Atlas.amber,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    marginTop: 8,
   },
-  buttonInner: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  footer: {
-    marginTop: 'auto',
-    marginBottom: 40,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  footerText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  signInLink: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 8,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#1e293b',
-  },
-  dividerText: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
+  submitButtonText: { fontFamily: Fonts.sans, color: Atlas.inkOnAmber, fontSize: 15, fontWeight: '700' },
+
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Atlas.hairline },
+  dividerText: { fontFamily: Fonts.sans, color: Atlas.paperFaint, fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase' },
+
   googleButton: {
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+    height: 52, borderRadius: Radii.r2,
+    backgroundColor: 'rgba(245,239,230,0.06)',
+    borderWidth: 1, borderColor: 'rgba(245,239,230,0.18)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  googleIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleG: {
-    color: '#4285F4',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  googleButtonText: {
-    color: '#0a0a0a',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  googleG: { color: '#4285F4', fontSize: 16, fontWeight: '700', fontFamily: Fonts.sans },
+  googleButtonText: { fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 14, fontWeight: '600' },
+
+  footer: { marginTop: 'auto', marginBottom: 32, flexDirection: 'row', justifyContent: 'center' },
+  footerText: { fontFamily: Fonts.sans, color: Atlas.paperMute, fontSize: 13 },
+  signUpLink: { fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 13, fontWeight: '700' },
 });
 
 export default LoginScreen;

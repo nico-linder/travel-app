@@ -188,8 +188,7 @@ const CreateTripScreen = () => {
         name,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
-        creator_id: finalUserId,
-        description: selectedTags.join(','), // Store tags in description for now
+        created_by: finalUserId,
         fullName: fullName || undefined
       });
 
@@ -222,7 +221,7 @@ const CreateTripScreen = () => {
           onPress={() => setKnowWhereGoing(true)}
         >
           <View style={[styles.optionIconContainer, knowWhereGoing === true && styles.optionIconContainerActive]}>
-            <Compass size={24} color={knowWhereGoing === true ? '#ffffff' : '#475569'} />
+            <Compass size={24} color={knowWhereGoing === true ? '#F5EFE6' : '#5A5448'} />
           </View>
           <View>
             <Text style={[styles.optionText, knowWhereGoing === true && styles.optionTextActive]}>Yes, I have a place</Text>
@@ -235,7 +234,7 @@ const CreateTripScreen = () => {
           onPress={() => setKnowWhereGoing(false)}
         >
           <View style={[styles.optionIconContainer, knowWhereGoing === false && styles.optionIconContainerActive]}>
-            <Sparkles size={24} color={knowWhereGoing === false ? '#ffffff' : '#475569'} />
+            <Sparkles size={24} color={knowWhereGoing === false ? '#F5EFE6' : '#5A5448'} />
           </View>
           <View>
             <Text style={[styles.optionText, knowWhereGoing === false && styles.optionTextActive]}>No, help me decide</Text>
@@ -250,13 +249,13 @@ const CreateTripScreen = () => {
         disabled={knowWhereGoing === null}
       >
         <LinearGradient
-          colors={['#818cf8', '#60a5fa']}
+          colors={['#E8A85C', '#C8853A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.buttonGradient}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <ArrowRight size={20} color="#fff" />
+          <ArrowRight size={20} color="#1A1410" />
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -269,7 +268,7 @@ const CreateTripScreen = () => {
           <Text style={styles.stepTitle}>Where are we heading?</Text>
           <View style={styles.searchBox}>
             <View style={styles.searchInputWrapper}>
-              <Search size={20} color="#475569" />
+              <Search size={20} color="#5A5448" />
               <TextInput
                 value={searchQuery}
                 onChangeText={(text) => {
@@ -277,9 +276,9 @@ const CreateTripScreen = () => {
                   handleSearch(text);
                 }}
                 placeholder="Search country or city..."
-                placeholderTextColor="#475569"
+                placeholderTextColor="#5A5448"
                 style={styles.input}
-                selectionColor="#818cf8"
+                selectionColor="#E8A85C"
               />
             </View>
 
@@ -297,13 +296,13 @@ const CreateTripScreen = () => {
                     onPress={() => setDestination(res)}
                   >
                     <View style={[styles.resultIcon, destination?.xid === res.xid && styles.resultIconActive]}>
-                      <MapPin size={18} color={destination?.xid === res.xid ? '#ffffff' : '#475569'} />
+                      <MapPin size={18} color={destination?.xid === res.xid ? '#F5EFE6' : '#5A5448'} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.resultText, destination?.xid === res.xid && styles.resultTextActive]}>{res.name}</Text>
                       <Text style={styles.resultSubtext}>Location Found</Text>
                     </View>
-                    {destination?.xid === res.xid ? <CheckCircle2 size={20} color="#818cf8" /> : null}
+                    {destination?.xid === res.xid ? <CheckCircle2 size={20} color="#E8A85C" /> : null}
                   </TouchableOpacity>
                 ))
               )}
@@ -327,7 +326,7 @@ const CreateTripScreen = () => {
                     style={[styles.tag, isSelected && styles.tagActive]}
                     onPress={() => handleTagSelect(tag)}
                   >
-                    {isSelected && <CheckCircle2 size={14} color="#ffffff" style={{ marginRight: 6 }} />}
+                    {isSelected && <CheckCircle2 size={14} color="#F5EFE6" style={{ marginRight: 6 }} />}
                     <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>
                       {tag.replace(/_/g, ' ').charAt(0).toUpperCase() + tag.replace(/_/g, ' ').slice(1)}
                     </Text>
@@ -351,13 +350,13 @@ const CreateTripScreen = () => {
         disabled={!(destination || selectedTags.length > 0)}
       >
         <LinearGradient
-          colors={['#818cf8', '#60a5fa']}
+          colors={['#E8A85C', '#C8853A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.buttonGradient}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <ArrowRight size={20} color="#fff" />
+          <ArrowRight size={20} color="#1A1410" />
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -373,7 +372,7 @@ const CreateTripScreen = () => {
           style={[styles.dateTypeButton, possibleTime === 'specific' && styles.dateTypeButtonActive]}
           onPress={() => setPossibleTime('specific')}
         >
-          <Calendar size={20} color={possibleTime === 'specific' ? '#fff' : '#475569'} />
+          <Calendar size={20} color={possibleTime === 'specific' ? '#F5EFE6' : '#5A5448'} />
           <Text style={[styles.dateTypeText, possibleTime === 'specific' && styles.dateTypeTextActive]}>Specific Dates</Text>
         </TouchableOpacity>
         
@@ -381,7 +380,7 @@ const CreateTripScreen = () => {
           style={[styles.dateTypeButton, possibleTime === 'any' && styles.dateTypeButtonActive]}
           onPress={() => setPossibleTime('any')}
         >
-          <Sparkles size={20} color={possibleTime === 'any' ? '#fff' : '#475569'} />
+          <Sparkles size={20} color={possibleTime === 'any' ? '#F5EFE6' : '#5A5448'} />
           <Text style={[styles.dateTypeText, possibleTime === 'any' && styles.dateTypeTextActive]}>No Specific Time</Text>
         </TouchableOpacity>
       </View>
@@ -412,7 +411,7 @@ const CreateTripScreen = () => {
         </View>
       ) : (
         <View style={styles.anyTimeCard}>
-           <Sparkles size={48} color="rgba(129, 140, 248, 0.2)" />
+           <Sparkles size={48} color="rgba(232, 168, 92, 0.28)" />
            <Text style={styles.anyTimeTitle}>Flexible Journey</Text>
            <Text style={styles.anyTimeSubtitle}>You'll be able to set specific dates later once the itinerary is more defined.</Text>
         </View>
@@ -424,13 +423,13 @@ const CreateTripScreen = () => {
         disabled={(possibleTime === 'specific' && !endDate) || isFinalizing}
       >
         <LinearGradient
-          colors={['#818cf8', '#60a5fa']}
+          colors={['#E8A85C', '#C8853A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.buttonGradient}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <ArrowRight size={20} color="#fff" />
+          <ArrowRight size={20} color="#1A1410" />
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -455,9 +454,9 @@ const CreateTripScreen = () => {
                   value={customTripName}
                   onChangeText={setCustomTripName}
                   placeholder="Give your trip a name..."
-                  placeholderTextColor="#475569"
+                  placeholderTextColor="#5A5448"
                   style={styles.nameInput}
-                  selectionColor="#818cf8"
+                  selectionColor="#E8A85C"
                 />
               </View>
             </View>
@@ -484,15 +483,15 @@ const CreateTripScreen = () => {
             disabled={isFinalizing}
           >
             <LinearGradient
-              colors={['#818cf8', '#60a5fa']}
+              colors={['#E8A85C', '#C8853A']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.buttonGradient}
             >
-              {isFinalizing ? <ActivityIndicator color="#fff" /> : (
+              {isFinalizing ? <ActivityIndicator color="#1A1410" /> : (
                 <>
                   <Text style={styles.buttonText}>Create Trip</Text>
-                  <ArrowRight size={20} color="#fff" />
+                  <ArrowRight size={20} color="#1A1410" />
                 </>
               )}
             </LinearGradient>
@@ -505,7 +504,7 @@ const CreateTripScreen = () => {
       ) : registrationSuccess ? (
           <Animated.View entering={FadeIn} style={styles.successState}>
             <View style={styles.successIconCircle}>
-              <Mail size={40} color="#818cf8" />
+              <Mail size={40} color="#E8A85C" />
             </View>
             <Text style={styles.successTitle}>Check your email</Text>
             <Text style={styles.successSubtitle}>
@@ -527,9 +526,9 @@ const CreateTripScreen = () => {
                   value={customTripName}
                   onChangeText={setCustomTripName}
                   placeholder="Give your trip a name..."
-                  placeholderTextColor="#475569"
+                  placeholderTextColor="#5A5448"
                   style={styles.nameInput}
-                  selectionColor="#818cf8"
+                  selectionColor="#E8A85C"
                 />
               </View>
             </View>
@@ -538,12 +537,12 @@ const CreateTripScreen = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name</Text>
                 <View style={styles.authInputWrapper}>
-                  <User size={18} color="#475569" />
+                  <User size={18} color="#5A5448" />
                   <TextInput
                     value={fullName}
                     onChangeText={setFullName}
                     placeholder="John Doe"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#5A5448"
                     style={styles.authInput}
                   />
                 </View>
@@ -553,12 +552,12 @@ const CreateTripScreen = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={styles.authInputWrapper}>
-                <Mail size={18} color="#475569" />
+                <Mail size={18} color="#5A5448" />
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
                   placeholder="name@example.com"
-                  placeholderTextColor="#475569"
+                  placeholderTextColor="#5A5448"
                   style={styles.authInput}
                   autoCapitalize="none"
                   keyboardType="email-address"
@@ -569,12 +568,12 @@ const CreateTripScreen = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.authInputWrapper}>
-                <Lock size={18} color="#475569" />
+                <Lock size={18} color="#5A5448" />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="#475569"
+                  placeholderTextColor="#5A5448"
                   style={styles.authInput}
                   secureTextEntry
                 />
@@ -587,15 +586,15 @@ const CreateTripScreen = () => {
               disabled={authLoading || isFinalizing}
             >
               <LinearGradient
-                colors={['#818cf8', '#60a5fa']}
+                colors={['#E8A85C', '#C8853A']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
               >
-                {(authLoading || isFinalizing) ? <ActivityIndicator color="#fff" /> : (
+                {(authLoading || isFinalizing) ? <ActivityIndicator color="#1A1410" /> : (
                   <>
                     <Text style={styles.buttonText}>{authMode === 'register' ? 'Register & Finish' : 'Login & Finish'}</Text>
-                    <ArrowRight size={20} color="#fff" />
+                    <ArrowRight size={20} color="#1A1410" />
                   </>
                 )}
               </LinearGradient>
@@ -623,7 +622,7 @@ const CreateTripScreen = () => {
         >
           <View style={styles.header}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ChevronLeft color="#94a3b8" size={24} />
+              <ChevronLeft color="#C9C0B2" size={24} />
             </TouchableOpacity>
             
             <View style={styles.progressContainer}>
@@ -653,7 +652,7 @@ const CreateTripScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0E0C0A',
   },
   safeArea: {
     flex: 1,
@@ -669,12 +668,12 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   progressContainer: {
     flex: 1,
@@ -682,17 +681,17 @@ const styles = StyleSheet.create({
   },
   progressBarBackground: {
     height: 6,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#2A2520',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#818cf8',
+    backgroundColor: '#E8A85C',
     borderRadius: 3,
   },
   progressText: {
-    color: '#64748b',
+    color: '#8A8275',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -707,7 +706,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepTitle: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -1.5,
@@ -715,7 +714,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   stepSubtitle: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 32,
@@ -728,42 +727,42 @@ const styles = StyleSheet.create({
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     padding: 24,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     gap: 20,
   },
   optionCardActive: {
-    borderColor: '#818cf8',
-    backgroundColor: 'rgba(129, 140, 248, 0.08)',
+    borderColor: '#E8A85C',
+    backgroundColor: 'rgba(232, 168, 92, 0.12)',
   },
   optionIconContainer: {
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#221E19',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   optionIconContainerActive: {
-    backgroundColor: '#818cf8',
-    borderColor: '#818cf8',
+    backgroundColor: '#E8A85C',
+    borderColor: '#E8A85C',
   },
   optionText: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   optionTextActive: {
-    color: '#ffffff',
+    color: '#F5EFE6',
   },
   optionSubtext: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 13,
     fontWeight: '500',
     marginTop: 2,
@@ -782,18 +781,18 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 18,
     fontWeight: '800',
   },
   input: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     height: 56,
     borderRadius: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    color: '#ffffff',
+    borderColor: '#2A2520',
+    color: '#F5EFE6',
     fontSize: 16,
     fontWeight: '500',
     outlineStyle: 'none',
@@ -813,16 +812,16 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+    backgroundColor: 'rgba(232, 168, 92, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 100,
     gap: 6,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.2)',
+    borderColor: 'rgba(232, 168, 92, 0.28)',
   },
   aiBadgeText: {
-    color: '#818cf8',
+    color: '#E8A85C',
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -835,12 +834,12 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     height: 56,
     borderRadius: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     marginBottom: 24,
   },
   resultsList: {
@@ -850,7 +849,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.2)',
+    backgroundColor: '#161310',
     borderRadius: 16,
     marginBottom: 12,
     gap: 16,
@@ -858,33 +857,33 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   resultItemActive: {
-    backgroundColor: 'rgba(129, 140, 248, 0.08)',
-    borderColor: '#818cf8',
+    backgroundColor: 'rgba(232, 168, 92, 0.12)',
+    borderColor: '#E8A85C',
   },
   resultIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#221E19',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   resultIconActive: {
-    backgroundColor: '#818cf8',
-    borderColor: '#818cf8',
+    backgroundColor: '#E8A85C',
+    borderColor: '#E8A85C',
   },
   resultText: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 16,
     fontWeight: '700',
   },
   resultTextActive: {
-    color: '#ffffff',
+    color: '#F5EFE6',
   },
   resultSubtext: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -900,22 +899,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 56,
     borderRadius: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     gap: 10,
   },
   dateTypeButtonActive: {
-    backgroundColor: '#818cf8',
-    borderColor: '#818cf8',
+    backgroundColor: '#E8A85C',
+    borderColor: '#E8A85C',
   },
   dateTypeText: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 14,
     fontWeight: '700',
   },
   dateTypeTextActive: {
-    color: '#ffffff',
+    color: '#F5EFE6',
   },
   calendarWrapper: {
     gap: 20,
@@ -923,11 +922,11 @@ const styles = StyleSheet.create({
   },
   selectedDatesDisplay: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -936,38 +935,38 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dateInfoLabel: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1,
   },
   dateInfoValue: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 16,
     fontWeight: '700',
   },
   dateSeparator: {
     width: 1,
     height: 32,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#2A2520',
     marginHorizontal: 16,
   },
   anyTimeCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     padding: 32,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     alignItems: 'center',
     gap: 16,
   },
   anyTimeTitle: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 20,
     fontWeight: '800',
   },
   anyTimeSubtitle: {
-    color: '#64748b',
+    color: '#8A8275',
     textAlign: 'center',
     lineHeight: 22,
     fontSize: 15,
@@ -976,7 +975,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   label: {
-    color: '#64748b',
+    color: '#8A8275',
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -990,17 +989,17 @@ const styles = StyleSheet.create({
   authInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     height: 56,
     borderRadius: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   authInput: {
     flex: 1,
     marginLeft: 12,
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 16,
     outlineStyle: 'none',
   } as any,
@@ -1009,62 +1008,62 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   switchAuthText: {
-    color: '#818cf8',
+    color: '#E8A85C',
     fontWeight: '700',
     fontSize: 14,
   },
   successState: {
     alignItems: 'center',
     paddingVertical: 40,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     paddingHorizontal: 24,
   },
   successIconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+    backgroundColor: 'rgba(232, 168, 92, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.2)',
+    borderColor: 'rgba(232, 168, 92, 0.28)',
   },
   successTitle: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 12,
   },
   successSubtitle: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   successButton: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#2A2520',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#3A332C',
   },
   successButtonText: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontWeight: '700',
     fontSize: 14,
   },
   summaryCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
     gap: 24,
   },
   summaryInfo: {
@@ -1074,26 +1073,26 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   summaryLabel: {
-    color: '#475569',
+    color: '#5A5448',
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
   summaryValue: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 18,
     fontWeight: '700',
   },
   nameInputWrapper: {
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderRadius: 12,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   nameInput: {
-    color: '#ffffff',
+    color: '#F5EFE6',
     fontSize: 18,
     fontWeight: '700',
     paddingHorizontal: 16,
@@ -1112,33 +1111,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 100,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: '#161310',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#2A2520',
   },
   tagActive: {
-    backgroundColor: '#818cf8',
-    borderColor: '#818cf8',
+    backgroundColor: '#E8A85C',
+    borderColor: '#E8A85C',
   },
   tagText: {
-    color: '#94a3b8',
+    color: '#C9C0B2',
     fontSize: 14,
     fontWeight: '700',
   },
   tagTextActive: {
-    color: '#ffffff',
+    color: '#F5EFE6',
   },
   selectedCount: {
     alignItems: 'center',
     marginTop: 10,
-    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+    backgroundColor: 'rgba(232, 168, 92, 0.12)',
     paddingVertical: 8,
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.2)',
+    borderColor: 'rgba(232, 168, 92, 0.28)',
   },
   selectedCountText: {
-    color: '#818cf8',
+    color: '#E8A85C',
     fontSize: 12,
     fontWeight: '900',
     textTransform: 'uppercase',

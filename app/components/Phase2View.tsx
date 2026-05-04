@@ -6,6 +6,7 @@ import { openTripMapService } from '../services/openTripMap';
 import { tripService } from '../services/tripService';
 import { supabase } from '../lib/supabase';
 import { SwipeCard } from './SwipeCard';
+import { Atlas, Fonts, Radii, eyebrow } from '../constants/atlas';
 
 export const Phase2View = ({ tripId }: { tripId: string }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,28 +66,29 @@ export const Phase2View = ({ tripId }: { tripId: string }) => {
     <View style={styles.container}>
       <View style={styles.search}>
         <View style={styles.inputBar}>
-          <Search color="#475569" size={18} />
+          <Search color={Atlas.paperFaint} size={16} />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search spot..."
-            placeholderTextColor="#475569"
+            placeholder="Propose a place — search any city, region, or landmark…"
+            placeholderTextColor={Atlas.paperMute}
             style={styles.input}
-            selectionColor="#818cf8"
+            selectionColor={Atlas.amber}
           />
-          {isSearching && <ActivityIndicator size="small" color="#ffffff" />}
+          {isSearching && <ActivityIndicator size="small" color={Atlas.amber} />}
         </View>
 
         {searchQuery.length > 2 && searchResults && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.result}
             onPress={() => handleAddLocation(searchResults)}
+            activeOpacity={0.85}
           >
             <View style={styles.resultInfo}>
-              <MapPin color="#818cf8" size={16} />
+              <MapPin color={Atlas.amber} size={16} />
               <Text style={styles.resultText}>{searchResults.name}</Text>
             </View>
-            <Plus color="#ffffff" size={20} />
+            <Plus color={Atlas.amber} size={18} />
           </TouchableOpacity>
         )}
       </View>
@@ -120,71 +122,29 @@ export const Phase2View = ({ tripId }: { tripId: string }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  search: {
-    marginBottom: 32,
-    zIndex: 10,
-  },
+  container: { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
+  search: { marginBottom: 24, zIndex: 10 },
   inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    height: 52,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: Atlas.ink2,
+    height: 48, borderRadius: Radii.r2,
+    paddingHorizontal: 14,
+    borderWidth: 1, borderColor: Atlas.hairline,
   },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    color: '#ffffff',
-    fontSize: 15,
-    outlineStyle: 'none',
-  } as any,
+  input: { flex: 1, fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 14 } as any,
   result: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1e293b',
-    padding: 16,
-    borderRadius: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: Atlas.ink2, padding: 14, borderRadius: Radii.r2,
+    borderWidth: 1, borderColor: Atlas.amberLine,
     marginTop: 8,
   },
-  resultInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  resultText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  stack: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
+  resultInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  resultText: { fontFamily: Fonts.serif, fontSize: 18, color: Atlas.paper, letterSpacing: -0.3 },
+  stack: { flex: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   empty: {
-    padding: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    borderStyle: 'dashed',
-    width: '100%',
-    alignItems: 'center',
+    padding: 36, borderRadius: Radii.r4,
+    borderWidth: 1.5, borderColor: Atlas.hairline2, borderStyle: 'dashed',
+    width: '100%', alignItems: 'center',
   },
-  emptyText: {
-    color: '#475569',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontSize: 12,
-  },
+  emptyText: { ...eyebrow },
 });

@@ -29,7 +29,7 @@ export const Skeleton = ({ width, height, borderRadius = 8, style = {} }: { widt
           height,
           borderRadius,
           opacity,
-          backgroundColor: '#1e293b', // border-slate-800 color for consistency
+          backgroundColor: '#2A2520', // border-slate-800 color for consistency
         },
         style
       ]}
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   connector: {
     width: 2,
     height: 48,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#2A2520',
     marginTop: 8,
   },
 });

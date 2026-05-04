@@ -1,6 +1,7 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { Atlas, Fonts } from '@/constants/atlas';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -20,7 +21,7 @@ export function ThemedText({
   return (
     <Text
       style={[
-        { color },
+        { color, fontFamily: Fonts.sans },
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
@@ -34,27 +35,20 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
+  default: { fontSize: 16, lineHeight: 24 },
+  defaultSemiBold: { fontSize: 16, lineHeight: 24, fontWeight: '600' },
   title: {
+    fontFamily: Fonts.serif,
     fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    fontWeight: '400',
+    lineHeight: 34,
+    letterSpacing: -0.6,
   },
   subtitle: {
+    fontFamily: Fonts.serif,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '400',
+    letterSpacing: -0.3,
   },
-  link: {
-    lineHeight: 30,
-    fontSize: 16,
-    color: '#0a7ea4',
-  },
+  link: { lineHeight: 30, fontSize: 16, color: Atlas.amber, fontWeight: '600' },
 });

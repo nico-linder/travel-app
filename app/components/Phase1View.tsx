@@ -7,6 +7,7 @@ import { openTripMapService } from '../services/openTripMap';
 import { tripService } from '../services/tripService';
 import { supabase } from '../lib/supabase';
 import { DashboardSkeleton } from './Skeleton';
+import { Atlas, Fonts, display } from '../constants/atlas';
 
 const fetchPlaceDetails = async (places: any[]) => {
   const detailPromises = places.slice(0, 10).map(place => 
@@ -117,7 +118,7 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
 
             {currentIndex >= locations.length ? (
               <View style={styles.empty}>
-                <Sparkles size={40} color="#818cf8" />
+                <Sparkles size={40} color={Atlas.amber} />
                 <Text style={styles.emptyTitle}>All Caught Up.</Text>
                 <Text style={styles.emptySubtitle}>Waiting for other members to finish.</Text>
               </View>
@@ -125,7 +126,7 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
           </>
         ) : (
           <View style={styles.empty}>
-            <Sparkles size={40} color="#818cf8" />
+            <Sparkles size={40} color={Atlas.amber} />
             <Text style={styles.emptyTitle}>No spots found.</Text>
             <Text style={styles.emptySubtitle}>Try adjusting your search or area.</Text>
           </View>
@@ -152,23 +153,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  errorText: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  empty: {
-    alignItems: 'center',
-    gap: 16,
-  },
-  emptyTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  emptySubtitle: {
-    color: '#64748b',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
+  errorText: { color: Atlas.red, fontFamily: Fonts.sans, fontWeight: '600' },
+  empty: { alignItems: 'center', gap: 14, paddingHorizontal: 32 },
+  emptyTitle: { ...display(28), letterSpacing: -0.6 },
+  emptySubtitle: { fontFamily: Fonts.sans, fontSize: 14, color: Atlas.paperMute, textAlign: 'center' },
 });

@@ -1,45 +1,22 @@
-import { Platform } from 'react-native';
+import { Atlas, Fonts as AtlasFonts } from './atlas';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#818cf8'; // Indigo-400
-
-export const Colors = {
-  light: {
-    text: '#171717',
-    background: '#ffffff',
-    tint: tintColorLight,
-    icon: '#666666',
-    tabIconDefault: '#666666',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ededed', // foreground from globals.css
-    background: '#0a0a0a', // background from globals.css
-    tint: tintColorDark,
-    icon: '#94a3b8', 
-    tabIconDefault: '#475569',
-    tabIconSelected: tintColorDark,
-  },
+// React Navigation expects this Colors shape. Atlas is a dark-only product —
+// both schemes resolve to the same editorial-dusk palette so screens look
+// consistent regardless of the device's color scheme.
+const palette = {
+  text: Atlas.paper,
+  background: Atlas.ink,
+  tint: Atlas.amber,
+  icon: Atlas.paperMute,
+  tabIconDefault: Atlas.paperMute,
+  tabIconSelected: Atlas.amber,
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    sans: 'System',
-    serif: 'Georgia',
-    rounded: 'System',
-    mono: 'Menlo',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    // Exact Geist/Vercel stack
-    sans: "Geist, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "system-ui",
-    mono: "Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Colors = {
+  light: palette,
+  dark:  palette,
+};
+
+export const Fonts = AtlasFonts;
+
+export { Atlas };

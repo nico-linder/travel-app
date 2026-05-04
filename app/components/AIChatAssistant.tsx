@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, ActivityIndicator } from 'react-native';
-import { X, Send, Bot } from 'lucide-react-native';
-import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import { X, Send } from 'lucide-react-native';
+import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { chatWithAI } from '../lib/googleAI';
 import { supabase } from '../lib/supabase';
+import { Atlas, Fonts, Radii, eyebrow } from '../constants/atlas';
 
-export const AIChatAssistant = ({ 
-  isOpen, 
-  onClose, 
+export const AIChatAssistant = ({
+  isOpen,
+  onClose,
   tripId,
-  tripName, 
-  inline = false 
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
-  tripId: string,
-  tripName?: string,
-  inline?: boolean
+  tripName,
+  inline = false,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  tripId: string;
+  tripName?: string;
+  inline?: boolean;
 }) => {
   const [messages, setMessages] = useState<{ id: string; text: string; sender: 'user' | 'ai' }[]>([]);
   const [inputText, setInputText] = useState('');
@@ -30,24 +30,20 @@ export const AIChatAssistant = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        
-        // Fetch history
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('chat_messages')
           .select('*')
           .eq('trip_id', tripId)
           .order('created_at', { ascending: true });
-        
         if (data && data.length > 0) {
-          setMessages(data.map(m => ({
-            id: m.id,
-            text: m.text,
-            sender: m.sender as 'user' | 'ai'
-          })));
+          setMessages(data.map((m: any) => ({ id: m.id, text: m.text, sender: m.sender as 'user' | 'ai' })));
         } else {
-          // Welcome message
           setMessages([
-            { id: 'welcome', text: `How can I help with your trip to ${tripName || 'your destination'}?`, sender: 'ai' }
+            {
+              id: 'welcome',
+              text: `How can I help with your trip${tripName ? ` to ${tripName}` : ''}?`,
+              sender: 'ai',
+            },
           ]);
         }
       }
@@ -57,67 +53,42 @@ export const AIChatAssistant = ({
 
   const handleSend = async () => {
     if (!inputText.trim() || isTyping) return;
-    
     const userMsg = { id: Date.now().toString(), text: inputText, sender: 'user' as const };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInputText('');
     setIsTyping(true);
 
     try {
-      // 1. Save user message to Supabase
       if (userId) {
         await supabase.from('chat_messages').insert({
-          trip_id: tripId,
-          user_id: userId,
-          text: userMsg.text,
-          sender: 'user'
+          trip_id: tripId, user_id: userId, text: userMsg.text, sender: 'user',
         });
       }
-
       const history = messages
-        .filter(m => m.id !== 'welcome')
-        .map(m => ({
-          role: m.sender === 'user' ? 'user' as const : 'model' as const,
-          parts: [{ text: m.text }]
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({
+          role: m.sender === 'user' ? ('user' as const) : ('model' as const),
+          parts: [{ text: m.text }],
         }));
-
-      const systemPrompt = tripName 
-        ? `You are an expert travel planning assistant for a trip to ${tripName}. Be concise, professional, and helpful.`
+      const systemPrompt = tripName
+        ? `You are Atlas, an expert travel-planning assistant for a trip to ${tripName}. Be concise, calm, and concrete.`
         : undefined;
-
       const aiResponse = await chatWithAI(inputText, history, systemPrompt);
-      
-      const aiMsg = { 
-        id: (Date.now() + 1).toString(), 
-        text: aiResponse, 
-        sender: 'ai' as const 
-      };
-
-      setMessages(prev => [...prev, aiMsg]);
-
-      // 2. Save AI message to Supabase
+      const aiMsg = { id: (Date.now() + 1).toString(), text: aiResponse, sender: 'ai' as const };
+      setMessages((prev) => [...prev, aiMsg]);
       if (userId) {
         await supabase.from('chat_messages').insert({
-          trip_id: tripId,
-          user_id: userId,
-          text: aiMsg.text,
-          sender: 'ai'
+          trip_id: tripId, user_id: userId, text: aiMsg.text, sender: 'ai',
         });
       }
     } catch (error: any) {
-      let userMessage = "I'm sorry, I encountered an error. Please try again.";
-      
+      let userMessage = "I hit an error. Try again?";
       if (error.message?.includes('503') || error.message?.includes('high demand')) {
-        userMessage = "I'm a bit overwhelmed with requests right now! Please try again in a moment. ✈️";
+        userMessage = "I'm overloaded. Try again in a moment.";
       } else if (error.message?.includes('429')) {
-        userMessage = "We've sent too many requests. Let's take a short break and try again soon.";
+        userMessage = "Too many requests. Let's pause and try again soon.";
       }
-
-      setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        text: userMessage, 
-        sender: 'ai' as const 
-      }]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: userMessage, sender: 'ai' as const }]);
     } finally {
       setIsTyping(false);
     }
@@ -129,73 +100,71 @@ export const AIChatAssistant = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={styles.headerInfo}>
-          <View style={styles.botCircle}>
-            <Bot color="#818cf8" size={20} />
+          <View style={styles.brandMark}><Text style={styles.brandMarkText}>A</Text></View>
+          <View>
+            <Text style={styles.headerTitle}>Atlas</Text>
+            <Text style={styles.headerStatus}>● online</Text>
           </View>
-          <Text style={styles.headerTitle}>Travel AI</Text>
         </View>
         {!inline && (
-          <TouchableOpacity onPress={onClose} style={styles.close}>
-            <X color="#64748b" size={20} />
+          <TouchableOpacity onPress={onClose} style={styles.close} activeOpacity={0.85}>
+            <X color={Atlas.paperMute} size={18} />
           </TouchableOpacity>
         )}
       </View>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={inline ? 60 : 0}
       >
-        <ScrollView 
-          style={styles.chat} 
-          contentContainerStyle={styles.chatContent} 
+        <ScrollView
+          style={styles.chat}
+          contentContainerStyle={styles.chatContent}
           showsVerticalScrollIndicator={false}
           ref={scrollViewRef}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {messages.map((msg) => (
             <View key={msg.id} style={[styles.bubble, msg.sender === 'user' ? styles.userBubble : styles.aiBubble]}>
-              <Text style={[styles.msgText, msg.sender === 'user' ? styles.userText : styles.aiText]}>{msg.text}</Text>
+              <Text style={[styles.msgText, msg.sender === 'user' ? styles.userText : styles.aiText]}>
+                {msg.text}
+              </Text>
             </View>
           ))}
           {isTyping && (
             <View style={[styles.bubble, styles.aiBubble]}>
-              <ActivityIndicator size="small" color="#818cf8" />
+              <ActivityIndicator size="small" color={Atlas.amber} />
             </View>
           )}
         </ScrollView>
 
-        <View style={[
-          styles.inputBar, 
-          { paddingBottom: inline ? (Platform.OS === 'ios' ? 90 : 80) : (Platform.OS === 'ios' ? 36 : 24) }
-        ]}>
+        <View
+          style={[
+            styles.inputBar,
+            { paddingBottom: inline ? (Platform.OS === 'ios' ? 90 : 80) : Platform.OS === 'ios' ? 36 : 24 },
+          ]}
+        >
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ask anything..."
-              placeholderTextColor="#475569"
+              placeholder="Ask Atlas anything…"
+              placeholderTextColor={Atlas.paperFaint}
               value={inputText}
               onChangeText={setInputText}
-              selectionColor="#818cf8"
+              selectionColor={Atlas.amber}
               editable={!isTyping}
             />
           </View>
-          <TouchableOpacity onPress={handleSend} style={styles.send} disabled={isTyping}>
-            <LinearGradient
-              colors={['#818cf8', '#60a5fa']}
-              style={[styles.sendInner, isTyping && { opacity: 0.5 }]}
-            >
-              <Send color="#ffffff" size={18} />
-            </LinearGradient>
+          <TouchableOpacity onPress={handleSend} style={[styles.send, isTyping && { opacity: 0.5 }]} disabled={isTyping} activeOpacity={0.85}>
+            <Send color={Atlas.inkOnAmber} size={18} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 
-  if (inline) {
-    return <View style={styles.inlineContainer}>{Content}</View>;
-  }
+  if (inline) return <View style={styles.inlineContainer}>{Content}</View>;
 
   return (
     <Animated.View entering={SlideInDown} exiting={SlideOutDown} style={styles.container}>
@@ -205,128 +174,57 @@ export const AIChatAssistant = ({
 };
 
 const styles = StyleSheet.create({
-  inlineContainer: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0a0a0a',
-    zIndex: 100,
-  },
-  safeArea: {
-    flex: 1,
-  },
+  inlineContainer: { flex: 1, backgroundColor: Atlas.ink },
+  container: { ...StyleSheet.absoluteFillObject, backgroundColor: Atlas.ink, zIndex: 100 },
+  safeArea: { flex: 1 },
   header: {
-    height: 72,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    height: 64, paddingHorizontal: 24,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderBottomWidth: 1, borderBottomColor: Atlas.hairline,
   },
-  headerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  headerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandMark: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Atlas.amber,
+    alignItems: 'center', justifyContent: 'center',
   },
-  botCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(129, 140, 248, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.2)',
-  },
-  headerTitle: {
-    color: '#ededed',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
+  brandMarkText: { fontFamily: Fonts.serif, fontSize: 18, color: Atlas.inkOnAmber },
+  headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Atlas.paper, letterSpacing: -0.3 },
+  headerStatus: { fontFamily: Fonts.sans, fontSize: 11, color: Atlas.green, marginTop: 2 },
   close: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    width: 36, height: 36, borderRadius: Radii.r2,
+    backgroundColor: Atlas.ink2,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: Atlas.hairline,
   },
-  chat: {
-    flex: 1,
-  },
-  chatContent: {
-    padding: 24,
-    gap: 24,
-  },
-  bubble: {
-    maxWidth: '85%',
-    padding: 18,
-    borderRadius: 20,
-  },
-  userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#3b82f6',
-    borderBottomRightRadius: 4,
-  },
+  chat: { flex: 1 },
+  chatContent: { padding: 22, gap: 14 },
+  bubble: { maxWidth: '85%', padding: 14, borderRadius: Radii.r3 },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: Atlas.amber, borderBottomRightRadius: 4 },
   aiBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    alignSelf: 'flex-start', backgroundColor: Atlas.ink2,
+    borderWidth: 1, borderColor: Atlas.hairline, borderBottomLeftRadius: 4,
   },
-  msgText: {
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 24,
-  },
-  userText: {
-    color: '#ffffff',
-  },
-  aiText: {
-    color: '#ededed',
-  },
+  msgText: { fontFamily: Fonts.sans, fontSize: 14.5, lineHeight: 22 },
+  userText: { color: Atlas.inkOnAmber, fontWeight: '500' },
+  aiText: { color: Atlas.paperDim },
   inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-    gap: 12,
-    backgroundColor: '#0a0a0a',
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, paddingTop: 14,
+    borderTopWidth: 1, borderTopColor: Atlas.hairline,
+    gap: 10, backgroundColor: Atlas.ink,
   },
   inputWrapper: {
-    flex: 1,
-    height: 52,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    flex: 1, height: 48,
+    backgroundColor: Atlas.ink2,
+    borderRadius: Radii.r2, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: Atlas.hairline,
     justifyContent: 'center',
   },
-  input: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-    outlineStyle: 'none',
-  } as any,
+  input: { fontFamily: Fonts.sans, color: Atlas.paper, fontSize: 14 } as any,
   send: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  sendInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 48, height: 48, borderRadius: Radii.r2,
+    backgroundColor: Atlas.amber,
+    alignItems: 'center', justifyContent: 'center',
   },
 });
