@@ -9,3 +9,5 @@ services:
     environment:
       - CAMUNDA_RUN_ADMIN_USER=admin
       - CAMUNDA_RUN_ADMIN_PASSWORD=admin
+    volumes:
+      - ./:/camunda/configuration/resources/

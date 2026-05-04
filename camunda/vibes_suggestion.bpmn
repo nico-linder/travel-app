@@ -1,13 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
-  <bpmn:process id="vibes-suggestion" name="Vibes Suggestion" isExecutable="true" camunda:historyTimeToLive="P180D">
-    <bpmn:startEvent id="StartEvent_1" name="Start">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.44.0">
+  <bpmn:collaboration id="Collaboration_Vibes">
+    <bpmn:participant id="Participant_User" name="User (Traveler)" processRef="Process_User" />
+    <bpmn:participant id="Participant_Frontend" name="Front-End (Mobile App)" processRef="Process_Frontend" />
+    <bpmn:participant id="Participant_System" name="Vibes Orchestration Engine (Camunda)" processRef="vibes-suggestion" />
+    <bpmn:messageFlow id="Flow_User_Select" name="Select Vibe" sourceRef="Activity_User_SelectVibe" targetRef="Activity_FE_HandleSelection" />
+    <bpmn:messageFlow id="Flow_FE_Trigger" name="REST POST /vibe" sourceRef="Activity_FE_HandleSelection" targetRef="StartEvent_1" />
+    <bpmn:messageFlow id="Flow_Sys_Suggestions" name="WebSocket / Suggestions" sourceRef="Activity_DetermineSuggestions" targetRef="Activity_FE_DisplaySuggestions" />
+    <bpmn:messageFlow id="Flow_FE_Review" name="Show Suggestions" sourceRef="Activity_FE_DisplaySuggestions" targetRef="Activity_UserReview" />
+    <bpmn:messageFlow id="Flow_User_Action" name="Confirm/Refine" sourceRef="Event_User_Done" targetRef="Activity_FE_Finalize" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_User" isExecutable="false">
+    <bpmn:userTask id="Activity_UserReview" name="Review and Confirm Vibes">
+      <bpmn:incoming>Flow_U2</bpmn:incoming>
+      <bpmn:outgoing>Flow_U3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_User_Happy" name="User happy with selection?">
+      <bpmn:incoming>Flow_U3</bpmn:incoming>
+      <bpmn:outgoing>Flow_U_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_U_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Activity_User_FinalConfirm" name="Confirm Selection">
+      <bpmn:incoming>Flow_U_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_U4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Activity_User_Refine" name="Request More Specific Vibes">
+      <bpmn:incoming>Flow_U_No</bpmn:incoming>
+      <bpmn:outgoing>Flow_U_Loop</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_U1" sourceRef="Event_User_Start" targetRef="Activity_User_SelectVibe" />
+    <bpmn:sequenceFlow id="Flow_U2" sourceRef="Activity_User_SelectVibe" targetRef="Activity_UserReview" />
+    <bpmn:sequenceFlow id="Flow_U3" sourceRef="Activity_UserReview" targetRef="Gateway_User_Happy" />
+    <bpmn:sequenceFlow id="Flow_U_Yes" name="Yes" sourceRef="Gateway_User_Happy" targetRef="Activity_User_FinalConfirm" />
+    <bpmn:sequenceFlow id="Flow_U_No" name="No" sourceRef="Gateway_User_Happy" targetRef="Activity_User_Refine" />
+    <bpmn:sequenceFlow id="Flow_U_Loop" sourceRef="Activity_User_Refine" targetRef="Activity_User_SelectVibe" />
+    <bpmn:endEvent id="Event_User_Done" name="Vibes Chosen">
+      <bpmn:incoming>Flow_U4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_U4" sourceRef="Activity_User_FinalConfirm" targetRef="Event_User_Done" />
+    <bpmn:manualTask id="Activity_User_SelectVibe" name="Select Vibe">
+      <bpmn:incoming>Flow_U1</bpmn:incoming>
+      <bpmn:incoming>Flow_U_Loop</bpmn:incoming>
+      <bpmn:outgoing>Flow_U2</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:startEvent id="Event_User_Start" name="Wants to plan a trip">
+      <bpmn:outgoing>Flow_U1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Activity_DetermineSuggestions" />
-    <bpmn:scriptTask id="Activity_DetermineSuggestions" name="Determine Suggestions" scriptFormat="javascript">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+  </bpmn:process>
+  <bpmn:process id="Process_Frontend" isExecutable="false">
+    <bpmn:task id="Activity_FE_DisplaySuggestions" name="Display New Vibes in Tag Cloud" />
+    <bpmn:sendTask id="Activity_FE_HandleSelection" name="Send Vibe to Backend" />
+    <bpmn:task id="Activity_FE_Finalize" name="Update UI State" />
+  </bpmn:process>
+  <bpmn:process id="vibes-suggestion" name="Vibes Suggestion" isExecutable="true" camunda:historyTimeToLive="P180D">
+    <bpmn:sequenceFlow id="Flow_S1" sourceRef="StartEvent_1" targetRef="Activity_DetermineSuggestions" />
+    <bpmn:scriptTask id="Activity_DetermineSuggestions" name="Determine Related Suggestions" scriptFormat="javascript">
+      <bpmn:incoming>Flow_S1</bpmn:incoming>
+      <bpmn:outgoing>Flow_S2</bpmn:outgoing>
       <bpmn:script>
         var relations = {
           'Natural': ['beaches', 'mountains', 'forests', 'waterfalls', 'lakes'],
@@ -26,36 +75,160 @@
         execution.setVariable('suggestedVibes', JSON.stringify(suggested));
       </bpmn:script>
     </bpmn:scriptTask>
-    <bpmn:endEvent id="EndEvent_1" name="End">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
+    <bpmn:endEvent id="EndEvent_1" name="Suggestions Generated">
+      <bpmn:incoming>Flow_S2</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Activity_DetermineSuggestions" targetRef="EndEvent_1" />
+    <bpmn:sequenceFlow id="Flow_S2" sourceRef="Activity_DetermineSuggestions" targetRef="EndEvent_1" />
+    <bpmn:startEvent id="StartEvent_1" name="Vibe Discovery Triggered">
+      <bpmn:outgoing>Flow_S1</bpmn:outgoing>
+    </bpmn:startEvent>
   </bpmn:process>
+  <bpmn:message id="Message_Discovery" name="DiscoveryTriggered" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="vibes-suggestion">
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="117" />
-        <di:waypoint x="422" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_Vibes">
+      <bpmndi:BPMNShape id="Participant_User_di" bpmnElement="Participant_User" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1000" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_UserReview_di" bpmnElement="Activity_UserReview">
+        <dc:Bounds x="450" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_User_Happy_di" bpmnElement="Gateway_User_Happy" isMarkerVisible="true">
+        <dc:Bounds x="605" y="145" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="185" y="142" width="24" height="14" />
+          <dc:Bounds x="590" y="107.5" width="79" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1p4q3m4_di" bpmnElement="Activity_DetermineSuggestions">
-        <dc:Bounds x="270" y="77" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_User_FinalConfirm_di" bpmnElement="Activity_User_FinalConfirm">
+        <dc:Bounds x="710" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_User_Refine_di" bpmnElement="Activity_User_Refine">
+        <dc:Bounds x="710" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_User_Done_di" bpmnElement="Event_User_Done">
+        <dc:Bounds x="872" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="856" y="133" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eifwfy_di" bpmnElement="Activity_User_SelectVibe">
+        <dc:Bounds x="300" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_User_Start_di" bpmnElement="Event_User_Start">
+        <dc:Bounds x="232" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="211" y="191" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_U1_di" bpmnElement="Flow_U1">
+        <di:waypoint x="268" y="170" />
+        <di:waypoint x="300" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U2_di" bpmnElement="Flow_U2">
+        <di:waypoint x="400" y="170" />
+        <di:waypoint x="450" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U3_di" bpmnElement="Flow_U3">
+        <di:waypoint x="550" y="170" />
+        <di:waypoint x="605" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U_Yes_di" bpmnElement="Flow_U_Yes">
+        <di:waypoint x="655" y="170" />
+        <di:waypoint x="710" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="674" y="152" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U_No_di" bpmnElement="Flow_U_No">
+        <di:waypoint x="630" y="195" />
+        <di:waypoint x="630" y="250" />
+        <di:waypoint x="710" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="638" y="214" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U_Loop_di" bpmnElement="Flow_U_Loop">
+        <di:waypoint x="710" y="270" />
+        <di:waypoint x="390" y="270" />
+        <di:waypoint x="390" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U4_di" bpmnElement="Flow_U4">
+        <di:waypoint x="810" y="170" />
+        <di:waypoint x="872" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Frontend_di" bpmnElement="Participant_Frontend" isHorizontal="true">
+        <dc:Bounds x="160" y="380" width="1000" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_FE_DisplaySuggestions_di" bpmnElement="Activity_FE_DisplaySuggestions">
+        <dc:Bounds x="450" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0i0s8u1_di" bpmnElement="Activity_FE_HandleSelection">
+        <dc:Bounds x="300" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_FE_Finalize_di" bpmnElement="Activity_FE_Finalize">
+        <dc:Bounds x="840" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_System_di" bpmnElement="Participant_System" isHorizontal="true">
+        <dc:Bounds x="160" y="550" width="1000" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_DetermineSuggestions_di" bpmnElement="Activity_DetermineSuggestions">
+        <dc:Bounds x="320" y="580" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="422" y="99" width="36" height="36" />
+        <dc:Bounds x="482" y="602" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0uh57y7_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="232" y="602" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="430" y="142" width="20" height="14" />
+          <dc:Bounds x="213" y="638" width="74" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_S1_di" bpmnElement="Flow_S1">
+        <di:waypoint x="268" y="620" />
+        <di:waypoint x="320" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S2_di" bpmnElement="Flow_S2">
+        <di:waypoint x="420" y="620" />
+        <di:waypoint x="482" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_User_Select_di" bpmnElement="Flow_User_Select">
+        <di:waypoint x="350" y="210" />
+        <di:waypoint x="350" y="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="362" y="295" width="56" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FE_Trigger_di" bpmnElement="Flow_FE_Trigger">
+        <di:waypoint x="350" y="480" />
+        <di:waypoint x="350" y="540" />
+        <di:waypoint x="250" y="540" />
+        <di:waypoint x="250" y="602" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="256" y="515" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Sys_Suggestions_di" bpmnElement="Flow_Sys_Suggestions">
+        <di:waypoint x="370" y="580" />
+        <di:waypoint x="370" y="530" />
+        <di:waypoint x="500" y="530" />
+        <di:waypoint x="500" y="480" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="405" y="536" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FE_Review_di" bpmnElement="Flow_FE_Review">
+        <di:waypoint x="500" y="400" />
+        <di:waypoint x="500" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="509" y="336" width="61" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_User_Action_di" bpmnElement="Flow_User_Action">
+        <di:waypoint x="890" y="188" />
+        <di:waypoint x="890" y="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="893" y="270" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

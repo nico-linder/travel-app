@@ -1,29 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Sparkles } from 'lucide-react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SwipeCard } from './SwipeCard';
 import { openTripMapService } from '../services/openTripMap';
+import { yelpService } from '../services/yelpService';
 import { tripService } from '../services/tripService';
+import { camundaService } from '../services/camundaService';
 import { supabase } from '../lib/supabase';
 import { DashboardSkeleton } from './Skeleton';
 import { Atlas, Fonts, display } from '../constants/atlas';
 
-const fetchPlaceDetails = async (places: any[]) => {
-  const detailPromises = places.slice(0, 10).map(place => 
-    openTripMapService.getPlaceDetails(place.xid)
-  );
-  return Promise.all(detailPromises);
-};
-
 export const Phase1View = ({ tripId }: { tripId: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id || null);
     });
+
+    // Deploy Phase 1 Voting Process to Camunda
+    const deployBPMN = async () => {
+      const bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Phase1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.44.0">
+  <bpmn:process id="phase1-voting" name="Phase 1 Voting Analysis" isExecutable="true" camunda:historyTimeToLive="P180D">
+    <bpmn:startEvent id="StartEvent_Voting" name="Voting Phase Started">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_Voting" targetRef="Activity_Init" />
+    <bpmn:scriptTask id="Activity_Init" name="Initialize Votes Array" scriptFormat="javascript">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:script>
+        execution.setVariable('votesJson', '[]');
+        execution.setVariable('votingResults', '[]');
+      </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Activity_Init" targetRef="Gateway_Merge" />
+    <bpmn:exclusiveGateway id="Gateway_Merge">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:incoming>Flow_LoopBack</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_Merge" targetRef="Event_Catch_Vote" />
+    <bpmn:intermediateCatchEvent id="Event_Catch_Vote" name="Vote Received">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_VoteReceived" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:scriptTask id="Activity_AddVote" name="Add Vote to State &#38; Rank" scriptFormat="javascript">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_LoopBack</bpmn:outgoing>
+      <bpmn:script>
+        var votesRaw = execution.getVariable('votesJson') || '[]';
+        var votes = JSON.parse(votesRaw);
+        var newVoteRaw = execution.getVariable('singleVoteJson');
+        if (newVoteRaw) {
+           var newVote = JSON.parse(newVoteRaw);
+           votes.push(newVote);
+           execution.setVariable('votesJson', JSON.stringify(votes));
+        }
+        var counts = {};
+        votes.forEach(function(vote) {
+          if (vote.is_liked) {
+            var key = vote.otm_xid || vote.destination_id || vote.name;
+            if (!counts[key]) {
+              counts[key] = { id: key, likes: 0, name: vote.name || 'Spot' };
+            }
+            counts[key].likes += 1;
+          }
+        });
+        var ranked = Object.values(counts).sort(function(a, b) { return b.likes - a.likes; });
+        execution.setVariable('votingResults', JSON.stringify(ranked));
+      </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Event_Catch_Vote" targetRef="Activity_AddVote" />
+    <bpmn:sequenceFlow id="Flow_LoopBack" sourceRef="Activity_AddVote" targetRef="Gateway_Merge" />
+  </bpmn:process>
+  <bpmn:message id="Message_VoteReceived" name="VoteReceived" />
+</bpmn:definitions>`;
+      await camundaService.deployProcess(bpmnXml, 'phase1_voting.bpmn');
+      // Ensure the process is actively running for this trip!
+      await camundaService.ensureProcessStarted(tripId);
+    };
+    deployBPMN();
   }, []);
 
   const { data: trip } = useQuery({
@@ -36,47 +100,117 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
     queryFn: () => tripService.getDestinations(tripId),
   });
 
+  const { data: camundaVotes } = useQuery({
+    queryKey: ['camunda-votes', tripId, userId],
+    enabled: !!userId,
+    queryFn: () => camundaService.getLiveRawVotes(tripId),
+    refetchInterval: 2000 // Poll every 2s to keep it somewhat live if others vote
+  });
+
   const { data: places, isLoading, error } = useQuery({
-    queryKey: ['otm-places', tripId, destinations?.length, trip?.description],
+    queryKey: ['yelp-places', tripId, destinations?.length, trip?.vibes],
     enabled: !!destinations && !!trip,
     queryFn: async () => {
-      let lat = 35.6762, lon = 139.6503; // Default Tokyo
-      
-      // 1. Get coordinates from the first destination
+      let lat = 48.8566, lon = 2.3522;
       if (destinations && destinations.length > 0) {
         const firstDest = destinations[0];
-        // If we don't have lat/lon in the DB, fetch them from OTM using the xid
-        const details = await openTripMapService.getPlaceDetails(firstDest.otm_xid || firstDest.place_id);
-        if (details?.point) {
-          lat = details.point.lat;
-          lon = details.point.lon;
+        lat = firstDest.lat;
+        lon = firstDest.lon;
+      } else if (trip?.destination) {
+        const geoData = await openTripMapService.getGeoname(trip.destination);
+        if (geoData) {
+          lat = geoData.lat || geoData.point?.lat || lat;
+          lon = geoData.lon || geoData.point?.lon || lon;
         }
       }
 
-      // 2. Use trip tags as filters (OpenTripMap 'kinds')
-      // Fallback to 'interesting_places' if no tags are set
-      const kinds = trip?.description || 'interesting_places';
+      const categories = yelpService.mapVibesToCategories(trip?.vibes || []);
+      const businesses = await yelpService.searchPlaces(lat, lon, categories, 20);
       
-      // Create a small bbox around the destination (approx 50km)
-      const offset = 0.5;
-      const lonMin = lon - offset, latMin = lat - offset, lonMax = lon + offset, latMax = lat + offset;
-      
-      const initialList = await openTripMapService.getPlacesByBbox(lonMin, latMin, lonMax, latMax, kinds, 20);
-      const namedPlaces = initialList.filter(p => p.name && p.name.length > 3);
-      return fetchPlaceDetails(namedPlaces);
+      return businesses.map(b => ({
+        id: b.id,
+        name: b.name,
+        displayImage: b.image_url || `https://source.unsplash.com/featured/?${encodeURIComponent(b.name)},travel`,
+        description: `Explore ${b.name}, rated ${b.rating}/5. ${b.location.display_address.join(', ')}.`,
+        kinds: b.categories.map(c => c.title).join(', '),
+        rating: b.rating,
+        price: b.price,
+        xid: b.id
+      }));
     }
   });
+  // Filter out places the user has already voted on
+  const filteredPlaces = (places || []).filter(place => {
+    // If Camunda hasn't loaded yet, show all or none (let's default to show all)
+    if (!camundaVotes) return true;
+    
+    // Check if there's any vote in Camunda from THIS user for THIS exact place (by otm_xid)
+    const alreadyVoted = camundaVotes.some(v => v.user_id === userId && (v.otm_xid === place.xid || v.name === place.name));
+    
+    return !alreadyVoted;
+  });
+
+  // Auto-process results if everything is already voted on
+  useEffect(() => {
+    if (filteredPlaces.length === 0 && places?.length && !isProcessing && results.length === 0) {
+      const runFinalAnalysis = async () => {
+        setIsProcessing(true);
+        // Get live results from the continuously running process!
+        const rankedResults = await camundaService.getLiveResults(tripId);
+        setResults(rankedResults);
+        setIsProcessing(false);
+      };
+      runFinalAnalysis();
+    }
+  }, [filteredPlaces.length, places?.length, results.length]);
 
   const handleVote = async (locationId: string, liked: boolean) => {
     if (!userId) return;
+    
+    // 1. Update state immediately (Optimistic UI)
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+
     try {
-      // For Phase 1, we might want to "propose" these as destinations if liked
-      // but the current schema uses destination_votes. 
-      // We need to ensure the place exists in 'destinations' table first.
+      const place = places?.find(p => p.xid === locationId);
+      let votePromise = Promise.resolve();
+
+      if (place) {
+        // 1. Send vote IMMEDIATELY to the Camunda Engine
+        camundaService.sendVote(tripId, {
+          is_liked: liked,
+          otm_xid: place.xid,
+          name: place.name,
+          user_id: userId
+        });
+
+        // 2. Perform DB save (for both likes and dislikes)
+        votePromise = tripService.proposeDestination(tripId, {
+          name: place.name,
+          image_url: place.displayImage || '',
+          description: place.description || '',
+          otm_xid: place.xid,
+          proposed_by: userId,
+        }, liked);
+      }
       
-      // Simplified: Just log for now, or implement a "sync to destinations" logic
-      console.log('Voted', liked, 'on', locationId);
-      setCurrentIndex((prev) => prev + 1);
+      // If we've reached the end, process results via Camunda
+      if (nextIndex >= (filteredPlaces?.length || 0)) {
+        setIsProcessing(true);
+        await votePromise;
+        
+        const rankedResults = await camundaService.getLiveResults(tripId);
+        setResults(rankedResults);
+        setIsProcessing(false);
+        queryClient.invalidateQueries({ queryKey: ['camunda-votes', tripId, userId] });
+        queryClient.invalidateQueries({ queryKey: ['destinations', tripId] });
+      } else {
+        // Otherwise fire and forget (background)
+        votePromise.then(() => {
+           queryClient.invalidateQueries({ queryKey: ['camunda-votes', tripId, userId] });
+           queryClient.invalidateQueries({ queryKey: ['destinations', tripId] });
+        });
+      }
     } catch (e) {
       console.error('Error voting:', e);
     }
@@ -89,12 +223,12 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
     </View>
   );
 
-  const locations = (places || []).map(p => ({
-    id: p.xid,
+  const locations = (filteredPlaces || []).map(p => ({
+    id: p.id,
     name: p.name,
-    image: p.preview?.source || 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80',
-    description: p.wikipedia_extracts?.text || 'Discover the beauty of this place.',
-    tags: p.kinds.split(',').slice(0, 2).map(k => k.replace(/_/g, ' ')),
+    image: p.displayImage,
+    description: p.description,
+    tags: p.kinds.split(',').slice(0, 2),
   }));
 
   return (
@@ -118,9 +252,30 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
 
             {currentIndex >= locations.length ? (
               <View style={styles.empty}>
-                <Sparkles size={40} color={Atlas.amber} />
-                <Text style={styles.emptyTitle}>All Caught Up.</Text>
-                <Text style={styles.emptySubtitle}>Waiting for other members to finish.</Text>
+                {isProcessing ? (
+                  <ActivityIndicator size="large" color={Atlas.amber} />
+                ) : results.length > 0 ? (
+                  <View style={styles.resultsContainer}>
+                    <Sparkles size={32} color={Atlas.amber} style={{ marginBottom: 16 }} />
+                    <Text style={styles.emptyTitle}>Top Picks</Text>
+                    <Text style={styles.emptySubtitle}>Calculated by Camunda</Text>
+                    <View style={styles.resultsList}>
+                      {results.slice(0, 3).map((res, i) => (
+                        <View key={res.id} style={styles.resultItem}>
+                          <Text style={styles.resultRank}>#{i + 1}</Text>
+                          <Text style={styles.resultName}>{res.name}</Text>
+                          <Text style={styles.resultLikes}>{res.likes} likes</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <Sparkles size={40} color={Atlas.amber} />
+                    <Text style={styles.emptyTitle}>All Caught Up.</Text>
+                    <Text style={styles.emptySubtitle}>Waiting for other members to finish.</Text>
+                  </>
+                )}
               </View>
             ) : null}
           </>
@@ -155,6 +310,45 @@ const styles = StyleSheet.create({
   },
   errorText: { color: Atlas.red, fontFamily: Fonts.sans, fontWeight: '600' },
   empty: { alignItems: 'center', gap: 14, paddingHorizontal: 32 },
-  emptyTitle: { ...display(28), letterSpacing: -0.6 },
+  emptyTitle: { ...display(28), letterSpacing: -0.6, color: Atlas.paper },
   emptySubtitle: { fontFamily: Fonts.sans, fontSize: 14, color: Atlas.paperMute, textAlign: 'center' },
+  resultsContainer: {
+    alignItems: 'center',
+    width: '100%',
+    padding: 20,
+  },
+  resultsList: {
+    width: '100%',
+    marginTop: 24,
+    gap: 12,
+  },
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Atlas.ink2,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Atlas.hairline,
+  },
+  resultRank: {
+    color: Atlas.amber,
+    fontFamily: Fonts.sans,
+    fontWeight: '900',
+    fontSize: 16,
+    width: 40,
+  },
+  resultName: {
+    color: Atlas.paper,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
+    fontSize: 16,
+    flex: 1,
+  },
+  resultLikes: {
+    color: Atlas.paperMute,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });

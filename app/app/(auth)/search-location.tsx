@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, Scro
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Search, MapPin, Sparkles, Navigation, ArrowRight } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
-import { openTripMapService, OTMPlace } from '../../services/openTripMap';
+import { yelpService } from '../../services/yelpService';
+import { openTripMapService } from '../../services/openTripMap';
 import { Skeleton } from '../../components/Skeleton';
 import { Atlas, Fonts, Radii, eyebrow } from '../../constants/atlas';
 
@@ -11,9 +12,9 @@ const SearchLocationScreen = () => {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState(name || '');
-  const [results, setResults] = useState<OTMPlace[]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [popularPlaces, setPopularPlaces] = useState<OTMPlace[]>([]);
+  const [popularPlaces, setPopularPlaces] = useState<any[]>([]);
   const [loadingPopular, setLoadingPopular] = useState(true);
 
   useEffect(() => {
@@ -26,8 +27,8 @@ const SearchLocationScreen = () => {
   const loadPopularPlaces = async () => {
     setLoadingPopular(true);
     try {
-      const lonMin = 139.0, latMin = 35.0, lonMax = 140.0, latMax = 36.0;
-      const places = await openTripMapService.getPlacesByBbox(lonMin, latMin, lonMax, latMax, 'interesting_places', 6);
+      // Default to Tokyo for popular suggestions
+      const places = await yelpService.searchPlaces(35.6762, 139.6503, 'landmarks,parks', 6);
       setPopularPlaces(places || []);
     } catch (error) {
       console.error(error);
@@ -42,7 +43,7 @@ const SearchLocationScreen = () => {
     try {
       const data = await openTripMapService.getGeoname(query);
       if (data) {
-        const places = await openTripMapService.getPlacesInRadius(data.lon, data.lat, 5000, 'interesting_places', 10);
+        const places = await yelpService.searchPlaces(data.lat, data.lon, 'landmarks,parks', 10);
         setResults(places || []);
       } else {
         setResults([]);
@@ -82,7 +83,7 @@ const SearchLocationScreen = () => {
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Search Results</Text>
                 {results.map((place, index) => (
-                  <Animated.View key={place.xid} entering={FadeInUp.delay(index * 50)}>
+                   <Animated.View key={place.id} entering={FadeInUp.delay(index * 50)}>
                     <TouchableOpacity 
                       style={styles.placeCard}
                       onPress={() => router.replace('/(tabs)')}
@@ -93,7 +94,7 @@ const SearchLocationScreen = () => {
                       <View style={styles.placeInfo}>
                         <Text style={styles.placeName}>{place.name}</Text>
                         <Text style={styles.placeKinds}>
-                          {(place.kinds || '').split(',').slice(0, 2).join(' • ').replace(/_/g, ' ')}
+                          {place.categories?.map((c: any) => c.title).slice(0, 2).join(' • ')}
                         </Text>
                       </View>
                       <ArrowRight color="#334155" size={18} />
@@ -117,7 +118,7 @@ const SearchLocationScreen = () => {
                     </View>
                   ) : (
                     (popularPlaces || []).map((place, index) => (
-                      <Animated.View key={place.xid} entering={FadeInRight.delay(index * 100)}>
+                      <Animated.View key={place.id} entering={FadeInRight.delay(index * 100)}>
                         <TouchableOpacity 
                           style={styles.placeCard}
                           onPress={() => router.replace('/(tabs)')}
@@ -128,7 +129,7 @@ const SearchLocationScreen = () => {
                           <View style={styles.placeInfo}>
                             <Text style={styles.placeName}>{place.name}</Text>
                             <Text style={styles.placeKinds}>
-                              {(place.kinds || '').split(',').slice(0, 2).join(' • ').replace(/_/g, ' ')}
+                              {place.categories?.map((c: any) => c.title).slice(0, 2).join(' • ')}
                             </Text>
                           </View>
                           <ArrowRight color={Atlas.paperFaint} size={18} />

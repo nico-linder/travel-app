@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Phase1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.44.0">
+  <bpmn:message id="Message_VoteReceived" name="VoteReceived" />
+  <bpmn:collaboration id="Collaboration_0vkzo42">
+    <bpmn:participant id="Participant_0ikrk7n" name="Enigne" processRef="phase1-voting" />
+    <bpmn:participant id="Participant_1mor060" name="User (Traveler)" processRef="Process_15zdw5l" />
+    <bpmn:messageFlow id="Flow_10bn0rn" sourceRef="Activity_17czhor" targetRef="Event_Catch_Vote" />
+  </bpmn:collaboration>
+  <bpmn:process id="phase1-voting" name="Phase 1 Voting Analysis" isExecutable="true" camunda:historyTimeToLive="P180D">
+    <bpmn:startEvent id="StartEvent_Voting" name="Voting Phase Started">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:scriptTask id="Activity_Init" name="Initialize Votes Array" scriptFormat="javascript">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:script>
+        execution.setVariable('votesJson', '[]');
+        execution.setVariable('votingResults', '[]');
+      </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:intermediateCatchEvent id="Event_Catch_Vote" name="Vote Received">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_VoteReceived" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:scriptTask id="Activity_AddVote" name="Add Vote to State &#38; Rank" scriptFormat="javascript">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_LoopBack</bpmn:outgoing>
+      <bpmn:script>
+        var votesRaw = execution.getVariable('votesJson') || '[]';
+        var votes = JSON.parse(votesRaw);
+        
+        var newVoteRaw = execution.getVariable('singleVoteJson');
+        if (newVoteRaw) {
+           var newVote = JSON.parse(newVoteRaw);
+           votes.push(newVote);
+           execution.setVariable('votesJson', JSON.stringify(votes));
+        }
+
+        // Aggregate every time a vote is added
+        var counts = {};
+        votes.forEach(function(vote) {
+          if (vote.is_liked) {
+            var key = vote.otm_xid || vote.destination_id || vote.name;
+            if (!counts[key]) {
+              counts[key] = { id: key, likes: 0, name: vote.name || 'Spot' };
+            }
+            counts[key].likes += 1;
+          }
+        });
+        var ranked = Object.values(counts).sort(function(a, b) { return b.likes - a.likes; });
+        execution.setVariable('votingResults', JSON.stringify(ranked));
+      </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:exclusiveGateway id="Gateway_Merge">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:incoming>Flow_LoopBack</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_Voting" targetRef="Activity_Init" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Activity_Init" targetRef="Gateway_Merge" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_Merge" targetRef="Event_Catch_Vote" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Event_Catch_Vote" targetRef="Activity_AddVote" />
+    <bpmn:sequenceFlow id="Flow_LoopBack" sourceRef="Activity_AddVote" targetRef="Gateway_Merge" />
+  </bpmn:process>
+  <bpmn:process id="Process_15zdw5l" isExecutable="false">
+    <bpmn:startEvent id="Event_0oa8gxh" name="Votes">
+      <bpmn:outgoing>Flow_19iursj</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_11pu3kg" name="All Voted?">
+      <bpmn:incoming>Flow_0hpuctt</bpmn:incoming>
+      <bpmn:outgoing>Flow_1tg1qh9</bpmn:outgoing>
+      <bpmn:outgoing>Flow_126rizw</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="Event_1mew31k" name="Votes Chosen">
+      <bpmn:incoming>Flow_1tg1qh9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="Activity_17czhor" name="Select Up or Downvote">
+      <bpmn:incoming>Flow_19iursj</bpmn:incoming>
+      <bpmn:incoming>Flow_126rizw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0hpuctt</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_19iursj" sourceRef="Event_0oa8gxh" targetRef="Activity_17czhor" />
+    <bpmn:sequenceFlow id="Flow_0hpuctt" sourceRef="Activity_17czhor" targetRef="Gateway_11pu3kg" />
+    <bpmn:sequenceFlow id="Flow_1tg1qh9" name="Yes" sourceRef="Gateway_11pu3kg" targetRef="Event_1mew31k" />
+    <bpmn:sequenceFlow id="Flow_126rizw" name="No" sourceRef="Gateway_11pu3kg" targetRef="Activity_17czhor" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0vkzo42">
+      <bpmndi:BPMNShape id="Participant_0ikrk7n_di" bpmnElement="Participant_0ikrk7n" isHorizontal="true">
+        <dc:Bounds x="151" y="360" width="729" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Voting_di" bpmnElement="StartEvent_Voting">
+        <dc:Bounds x="202" y="532" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="188" y="568" width="65" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Init_di" bpmnElement="Activity_Init">
+        <dc:Bounds x="290" y="510" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Catch_Vote_di" bpmnElement="Event_Catch_Vote">
+        <dc:Bounds x="550" y="532" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="533" y="568" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_AddVote_di" bpmnElement="Activity_AddVote">
+        <dc:Bounds x="650" y="510" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1hpsdy1_di" bpmnElement="Gateway_Merge" isMarkerVisible="true">
+        <dc:Bounds x="445" y="525" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="238" y="550" />
+        <di:waypoint x="290" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="390" y="550" />
+        <di:waypoint x="445" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_LoopBack_di" bpmnElement="Flow_LoopBack">
+        <di:waypoint x="700" y="510" />
+        <di:waypoint x="700" y="470" />
+        <di:waypoint x="470" y="470" />
+        <di:waypoint x="470" y="525" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="495" y="550" />
+        <di:waypoint x="550" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="586" y="550" />
+        <di:waypoint x="650" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_1jv4cb1" bpmnElement="Participant_1mor060" isHorizontal="true">
+        <dc:Bounds x="151" y="80" width="729" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0jpllk5" bpmnElement="Event_0oa8gxh">
+        <dc:Bounds x="223" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="227" y="191" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_11pu3kg_di" bpmnElement="Gateway_11pu3kg" isMarkerVisible="true">
+        <dc:Bounds x="505" y="145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="505" y="202" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0xyzfhw" bpmnElement="Event_1mew31k">
+        <dc:Bounds x="732" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="716" y="133" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qn554n_di" bpmnElement="Activity_17czhor">
+        <dc:Bounds x="330" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_1hcqkmd" bpmnElement="Flow_19iursj">
+        <di:waypoint x="259" y="170" />
+        <di:waypoint x="330" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hpuctt_di" bpmnElement="Flow_0hpuctt">
+        <di:waypoint x="430" y="170" />
+        <di:waypoint x="505" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tg1qh9_di" bpmnElement="Flow_1tg1qh9">
+        <di:waypoint x="555" y="170" />
+        <di:waypoint x="732" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="635" y="152" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_126rizw_di" bpmnElement="Flow_126rizw">
+        <di:waypoint x="530" y="145" />
+        <di:waypoint x="530" y="90" />
+        <di:waypoint x="380" y="90" />
+        <di:waypoint x="380" y="130" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="448" y="103" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10bn0rn_di" bpmnElement="Flow_10bn0rn">
+        <di:waypoint x="380" y="210" />
+        <di:waypoint x="380" y="390" />
+        <di:waypoint x="568" y="390" />
+        <di:waypoint x="568" y="532" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

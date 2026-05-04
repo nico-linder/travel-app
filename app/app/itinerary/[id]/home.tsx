@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, SafeAreaView, TouchableOpacity, StyleSheet, ImageBackground, ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ChevronLeft, MessageCircle, Sparkles, Map, Calendar, Settings as SettingsIcon, Compass, Share2,
+  ChevronLeft, MessageCircle, Sparkles, Map, Calendar, Settings as SettingsIcon, Compass, Share2, Users, Info, Vote, ArrowRight,
 } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -39,6 +39,12 @@ const ItineraryHomeScreen = () => {
     queryFn: () => tripService.getTrip(id as string),
   });
 
+  useEffect(() => {
+    if (trip?.current_phase) {
+      setPhase(trip.current_phase);
+    }
+  }, [trip?.current_phase]);
+
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -61,7 +67,6 @@ const ItineraryHomeScreen = () => {
     if (isLoading) return <DashboardSkeleton />;
 
     if (activeTab === 'plan') {
-      const progress = phase / 4;
       return (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Hero band */}
@@ -74,9 +79,9 @@ const ItineraryHomeScreen = () => {
               />
               <SafeAreaView style={styles.heroChrome}>
                 <View style={styles.heroTopRow}>
-                  <TouchableOpacity onPress={() => router.back()} style={styles.heroBtn} activeOpacity={0.85}>
+                  <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.heroBtn} activeOpacity={0.85}>
                     <ChevronLeft color={Atlas.paper} size={16} />
-                    <Text style={styles.heroBtnText}>All trips</Text>
+                    <Text style={styles.heroBtnText}>Dashboard</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.heroBtn} activeOpacity={0.85}>
                     <Share2 color={Atlas.paper} size={14} />
@@ -85,11 +90,6 @@ const ItineraryHomeScreen = () => {
                 </View>
 
                 <View style={styles.heroBottom}>
-                  <View style={[styles.tag, { backgroundColor: tagTones.amber.bg, borderColor: tagTones.amber.border }]}>
-                    <Text style={[styles.tagText, { color: tagTones.amber.color }]}>
-                      Phase {phase} · {cur.title}
-                    </Text>
-                  </View>
                   <Text style={styles.heroTitle}>{trip?.name || 'My trip'}</Text>
                   <View style={styles.heroMeta}>
                     <Calendar color={Atlas.paperDim} size={13} />
@@ -104,70 +104,61 @@ const ItineraryHomeScreen = () => {
             </ImageBackground>
           </View>
 
-          {/* Phase rail */}
-          <View style={styles.railWrap}>
-            <View style={styles.railLine} />
-            <View style={[styles.railFill, { width: `${(progress - 0.25) * 100}%` }]} />
-            <View style={styles.rail}>
-              {PHASES.map(p => {
-                const isActive = phase === p.id;
-                const isDone = phase > p.id;
-                const Icon = p.Icon;
-                return (
-                  <TouchableOpacity
-                    key={p.id}
-                    onPress={() => setPhase(p.id)}
-                    style={styles.railItem}
-                    activeOpacity={0.85}
-                  >
-                    <View
-                      style={[
-                        styles.railDot,
-                        isActive && styles.railDotActive,
-                        isDone && styles.railDotDone,
-                      ]}
-                    >
-                      <Icon
-                        size={16}
-                        color={isActive ? Atlas.inkOnAmber : isDone ? Atlas.amber : Atlas.paperMute}
-                      />
-                    </View>
-                    <Text style={[styles.railLabel, isActive && styles.railLabelActive]}>{p.title}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Phase header */}
-          <Animated.View key={phase} entering={FadeIn.duration(300)} style={styles.phaseHeader}>
-            <Text style={styles.eyebrow}>Phase {phase} of 4</Text>
-            <Text style={styles.phaseTitle}>{cur.title}.</Text>
-            <Text style={styles.phaseSub}>{cur.subtitle}</Text>
+          {/* Next Action Card */}
+          <Animated.View entering={FadeIn.delay(200)} style={{ paddingHorizontal: 24, marginTop: 16 }}>
+            <Text style={{...eyebrow, marginBottom: 12}}>Next Action</Text>
+            <TouchableOpacity 
+              onPress={() => router.push(`/itinerary/${id}/destination`)}
+              style={styles.contextCard}
+            >
+              <View style={styles.contextHead}>
+                <View style={[styles.brandMark, { backgroundColor: Atlas.ink3 }]}><Vote color={Atlas.amber} size={16} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contextTitle}>
+                    {trip?.current_phase === 1 ? 'Start Discovery' : 'Vote on Destinations'}
+                  </Text>
+                  <Text style={styles.contextBody}>
+                    {trip?.current_phase === 1 ? 'Find the best spots for your trip.' : 'Help the group decide where to go.'}
+                  </Text>
+                </View>
+                <ArrowRight size={20} color={Atlas.paperDim} />
+              </View>
+            </TouchableOpacity>
           </Animated.View>
 
-          {/* Phase body */}
-          <View style={styles.phaseBody}>{renderPhaseContent()}</View>
-
-          {/* Right-rail-style activity card (mobile: stacked) */}
-          <View style={styles.contextCard}>
-            <View style={styles.contextHead}>
-              <View style={styles.brandMark}><Text style={styles.brandMarkText}>A</Text></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.contextTitle}>Atlas</Text>
-                <Text style={styles.contextOnline}>● online</Text>
-              </View>
+          {/* Phase Progress Bar */}
+          <View style={{ paddingHorizontal: 24, marginTop: 32 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={eyebrow}>Trip Progress</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, fontWeight: '700', color: Atlas.amber }}>
+                {Math.round(((trip?.current_phase || 1) / 4) * 100)}%
+              </Text>
             </View>
-            <Text style={styles.contextBody}>
-              Em added Sintra. There's a 09:42 train from Rossio that arrives 10:25 — easy day trip from Lisbon.
-            </Text>
-            <View style={styles.contextActions}>
-              <TouchableOpacity style={styles.contextPrimary} activeOpacity={0.9}>
-                <Text style={styles.contextPrimaryText}>Add as Day 4</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.contextGhost} activeOpacity={0.9}>
-                <Text style={styles.contextGhostText}>Ask follow-up</Text>
-              </TouchableOpacity>
+            
+            <View style={styles.progressTrack}>
+               <View style={[styles.progressFill, { width: `${((trip?.current_phase || 1) / 4) * 100}%` }]} />
+            </View>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+              {PHASES.map((p) => {
+                const isActive = trip?.current_phase === p.id;
+                const isCompleted = (trip?.current_phase || 1) > p.id;
+                
+                return (
+                  <View key={p.id} style={{ alignItems: 'center', gap: 6 }}>
+                    <View style={[
+                      { width: 6, height: 6, borderRadius: 3, backgroundColor: Atlas.ink3 },
+                      (isActive || isCompleted) && { backgroundColor: Atlas.amber, shadowColor: Atlas.amber, shadowOpacity: 0.5, shadowRadius: 4, elevation: 4 }
+                    ]} />
+                    <Text style={[
+                      { fontFamily: Fonts.sans, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Atlas.paperMute },
+                      isActive && { color: Atlas.paper }
+                    ]}>
+                      {p.title}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
         </ScrollView>

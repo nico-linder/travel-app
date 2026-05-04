@@ -10,6 +10,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { CustomDatePicker } from '../../components/ui/CustomDatePicker';
 import { tripService } from '../../services/tripService';
 import { camundaService } from '../../services/camundaService';
+import { locationService, LocationResult } from '../../services/locationService';
 
 
 const { width } = Dimensions.get('window');
@@ -20,9 +21,9 @@ const CreateTripScreen = () => {
   // Onboarding State
   const [currentStep, setCurrentStep] = useState(1);
   const [knowWhereGoing, setKnowWhereGoing] = useState<boolean | null>(null);
-  const [destination, setDestination] = useState<OTMPlace | null>(null);
+  const [destination, setDestination] = useState<LocationResult | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<OTMPlace[]>([]);
+  const [searchResults, setSearchResults] = useState<LocationResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -80,21 +81,26 @@ const CreateTripScreen = () => {
     }
   };
 
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const data = await openTripMapService.getGeoname(query);
-      if (data) {
-        setSearchResults([{ name: data.name, lat: data.lat, lon: data.lon, xid: 'geoname-' + data.name } as any]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        performSearch(searchQuery);
       } else {
         setSearchResults([]);
       }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const performSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const results = await locationService.search(query);
+      setSearchResults(results);
     } catch (error) {
       console.error(error);
+      setSearchResults([]);
     }
     setIsSearching(false);
   };
@@ -188,7 +194,9 @@ const CreateTripScreen = () => {
         name,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
-        created_by: finalUserId,
+        creator_id: finalUserId,
+        vibes: knowWhereGoing ? [] : selectedTags,
+        current_phase: knowWhereGoing ? 2 : 1,
         fullName: fullName || undefined
       });
 
@@ -196,7 +204,7 @@ const CreateTripScreen = () => {
       if (destination) {
         await tripService.proposeDestination(trip.id, {
           name: destination.name,
-          otm_xid: destination.xid,
+          otm_xid: `geo-${destination.id}`,
           proposed_by: finalUserId
         });
       } else if (selectedTags.length > 0) {
@@ -271,10 +279,7 @@ const CreateTripScreen = () => {
               <Search size={20} color="#5A5448" />
               <TextInput
                 value={searchQuery}
-                onChangeText={(text) => {
-                  setSearchQuery(text);
-                  handleSearch(text);
-                }}
+                onChangeText={setSearchQuery}
                 placeholder="Search country or city..."
                 placeholderTextColor="#5A5448"
                 style={styles.input}
@@ -285,26 +290,39 @@ const CreateTripScreen = () => {
             <ScrollView style={styles.resultsList} showsVerticalScrollIndicator={false}>
               {isSearching ? (
                 <View style={{ gap: 12, marginTop: 12 }}>
-                  <Skeleton width="100%" height={68} borderRadius={16} />
-                  <Skeleton width="100%" height={68} borderRadius={16} />
+                  <Skeleton width="100%" height={76} borderRadius={16} />
+                  <Skeleton width="100%" height={76} borderRadius={16} />
+                  <Skeleton width="100%" height={76} borderRadius={16} />
+                  <Skeleton width="100%" height={76} borderRadius={16} />
                 </View>
               ) : (
-                searchResults.map((res) => (
-                  <TouchableOpacity 
-                    key={res.xid} 
-                    style={[styles.resultItem, destination?.xid === res.xid && styles.resultItemActive]}
-                    onPress={() => setDestination(res)}
-                  >
-                    <View style={[styles.resultIcon, destination?.xid === res.xid && styles.resultIconActive]}>
-                      <MapPin size={18} color={destination?.xid === res.xid ? '#F5EFE6' : '#5A5448'} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.resultText, destination?.xid === res.xid && styles.resultTextActive]}>{res.name}</Text>
-                      <Text style={styles.resultSubtext}>Location Found</Text>
-                    </View>
-                    {destination?.xid === res.xid ? <CheckCircle2 size={20} color="#E8A85C" /> : null}
-                  </TouchableOpacity>
-                ))
+                searchResults.map((res) => {
+                  const isCountry = res.type === 'country';
+                  const isActive = destination?.id === res.id;
+                  
+                  return (
+                    <TouchableOpacity 
+                      key={res.id} 
+                      style={[styles.resultItem, isActive && styles.resultItemActive]}
+                      onPress={() => setDestination(res)}
+                    >
+                      <View style={[styles.resultIcon, isActive && styles.resultIconActive]}>
+                        <MapPin size={18} color={isActive ? '#F5EFE6' : '#5A5448'} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.resultText, isActive && styles.resultTextActive]}>
+                          {res.name}
+                        </Text>
+                        <Text style={styles.resultSubtext}>
+                          {isCountry 
+                            ? (res.continent || 'Global') 
+                            : (res.country || res.continent || 'Location')}
+                        </Text>
+                      </View>
+                      {isActive ? <CheckCircle2 size={20} color="#E8A85C" /> : null}
+                    </TouchableOpacity>
+                  );
+                })
               )}
             </ScrollView>
           </View>

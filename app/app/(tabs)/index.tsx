@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, StyleSheet, RefreshControl, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Plus, ArrowRight, Compass, Settings } from 'lucide-react-native';
+import { Plus, Calendar, Settings, ArrowRight, Compass, Map, Sparkles, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
@@ -157,9 +157,17 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.greetingSub}>{tripPitch}</Text>
             </View>
-            <TouchableOpacity style={styles.iconButton} activeOpacity={0.85}>
-              <Settings color={Atlas.paperMute} size={18} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/explore')} style={styles.iconButton} activeOpacity={0.85}>
+                <Compass color={Atlas.paperMute} size={18} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.iconButton} activeOpacity={0.85}>
+                <Users color={Atlas.paperMute} size={18} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconButton} activeOpacity={0.85}>
+                <Settings color={Atlas.paperMute} size={18} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Stats strip */}
@@ -256,6 +264,41 @@ export default function HomeScreen() {
                 </ImageBackground>
               </TouchableOpacity>
             ))}
+          </View>
+
+          {/* All Trips Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Operations</Text>
+              <TouchableOpacity onPress={() => refetch()}>
+                <Text style={[styles.sectionTitle, { color: '#818cf8' }]}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {isLoading ? (
+              <View style={{ gap: 16 }}>
+                <Skeleton width="100%" height={240} borderRadius={24} />
+                <Skeleton width="100%" height={240} borderRadius={24} />
+              </View>
+            ) : trips.length > 0 ? (
+              <View style={{ gap: 16 }}>
+                {trips.map((trip, index) => renderTripCard(trip, index))}
+              </View>
+            ) : (
+              <Animated.View entering={FadeIn} style={styles.emptyState}>
+                <View style={styles.emptyIconCircle}>
+                  <Compass size={40} color="#1e293b" />
+                </View>
+                <Text style={styles.emptyTitle}>No trips yet</Text>
+                <Text style={styles.emptySubtitle}>Start by creating your first collaborative adventure.</Text>
+                <TouchableOpacity 
+                  onPress={() => router.push('/(auth)/create')}
+                  style={styles.emptyButton}
+                >
+                  <Text style={styles.emptyButtonText}>Create Trip</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
           </View>
 
           <View style={{ height: 100 }} />

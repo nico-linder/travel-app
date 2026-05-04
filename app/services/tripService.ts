@@ -4,6 +4,7 @@ export interface Trip {
   id: string;
   name: string;
   description?: string;
+  vibes?: string[];
   start_date: string;
   end_date: string;
   current_phase: number;
@@ -34,32 +35,37 @@ export const tripService = {
     return data as Trip[];
   },
 
-  async createTrip(tripData: { name: string; start_date?: string; end_date?: string; created_by: string; fullName?: string }) {
-    // 1. We skip profiles sync as it's likely handled by triggers or restricted by RLS
-    // and trips table doesn't have a created_by column in this schema.
-    
-    // 2. Create the trip
+  async createTrip(tripData: { 
+    name: string; 
+    start_date?: string; 
+    end_date?: string; 
+    creator_id: string; 
+    fullName?: string;
+    vibes?: string[];
+    current_phase?: number;
+  }) {
+    // 1. Create the trip
     const { data: trip, error: tripError } = await supabase
       .from('trips')
       .insert({
         name: tripData.name,
         start_date: tripData.start_date || null,
         end_date: tripData.end_date || null,
-        current_phase: 1,
-        creator_id: tripData.created_by
+        current_phase: tripData.current_phase || 1,
+        creator_id: tripData.creator_id,
+        vibes: tripData.vibes || []
       })
       .select()
       .single();
     
     if (tripError) throw tripError;
 
-    // 3. Add creator as admin member
-    // In this schema, ownership is likely managed through trip_members
+    // 2. Add creator as admin member
     const { error: memberError } = await supabase
       .from('trip_members')
       .insert({
         trip_id: trip.id,
-        user_id: tripData.created_by,
+        user_id: tripData.creator_id,
         role: 'admin'
       });
     
@@ -92,7 +98,26 @@ export const tripService = {
     return data;
   },
 
-  async proposeDestination(tripId: string, destination: any) {
+  async proposeDestination(tripId: string, destination: any, isLiked: boolean = true) {
+    // 1. Check if destination already exists for this trip
+    if (destination.otm_xid) {
+      const { data: existing } = await supabase
+        .from('destinations')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('otm_xid', destination.otm_xid)
+        .maybeSingle();
+
+      if (existing) {
+        // Just add/update the vote
+        if (destination.proposed_by) {
+          await this.vote(existing.id, destination.proposed_by, isLiked);
+        }
+        return existing;
+      }
+    }
+
+    // 2. Create new destination
     const { data, error } = await supabase
       .from('destinations')
       .insert({
@@ -103,7 +128,78 @@ export const tripService = {
       .single();
     
     if (error) throw error;
+
+    // 3. Automatically add the vote for the proposer
+    if (destination.proposed_by) {
+      await this.vote(data.id, destination.proposed_by, isLiked);
+    }
+
     return data;
+  },
+
+  async getUserVotes(tripId: string, userId: string) {
+    // Get all destinations for this trip first
+    const { data: destinations, error: destError } = await supabase
+      .from('destinations')
+      .select('id')
+      .eq('trip_id', tripId);
+    
+    if (destError) throw destError;
+    if (!destinations || destinations.length === 0) return [];
+
+    const destIds = destinations.map(d => d.id);
+
+    const { data, error } = await supabase
+      .from('votes')
+      .select('*')
+      .in('destination_id', destIds)
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getTripVotes(tripId: string) {
+    const { data: destinations, error: destError } = await supabase
+      .from('destinations')
+      .select('id, name')
+      .eq('trip_id', tripId);
+    
+    if (destError) throw destError;
+    if (!destinations || destinations.length === 0) return [];
+
+    const destIds = destinations.map(d => d.id);
+
+    const { data, error } = await supabase
+      .from('votes')
+      .select('*, users(display_name, avatar_url)')
+      .in('destination_id', destIds);
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getTripMembers(tripId: string) {
+    const { data, error } = await supabase
+      .from('trip_members')
+      .select('*, users(display_name, avatar_url)')
+      .eq('trip_id', tripId);
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async finalizeDestination(tripId: string, destinationId: string) {
+    const { error } = await supabase
+      .from('trips')
+      .update({ 
+        current_phase: 3, // Advance to Assembly
+        final_destination_id: destinationId // This column might need to be added to SQL
+      })
+      .eq('id', tripId);
+    
+    if (error) throw error;
+    return true;
   },
 
   subscribeToVotes(tripId: string, callback: (payload: any) => void) {
