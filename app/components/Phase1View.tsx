@@ -9,6 +9,7 @@ import { tripService } from '../services/tripService';
 import { camundaService } from '../services/camundaService';
 import { supabase } from '../lib/supabase';
 import { DashboardSkeleton } from './Skeleton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Atlas, Fonts, display } from '../constants/atlas';
 
 export const Phase1View = ({ tripId }: { tripId: string }) => {
@@ -16,12 +17,27 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [sessionVotedIds, setSessionVotedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id || null);
     });
+
+    // Load locally saved votes
+    const loadVotedIds = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(`voted_ids_${tripId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setSessionVotedIds(new Set(parsed));
+        }
+      } catch (e) {
+        console.error('Failed to load voted ids', e);
+      }
+    };
+    loadVotedIds();
 
     // Deploy Phase 1 Voting Process to Camunda
     const deployBPMN = async () => {
@@ -141,6 +157,9 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
   });
   // Filter out places the user has already voted on
   const filteredPlaces = (places || []).filter(place => {
+    // Keep places we just voted on in this session so the array doesn't shrink and cause skipping
+    if (sessionVotedIds.has(place.xid)) return true;
+
     // If Camunda hasn't loaded yet, show all or none (let's default to show all)
     if (!camundaVotes) return true;
     
@@ -167,7 +186,12 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
   const handleVote = async (locationId: string, liked: boolean) => {
     if (!userId) return;
     
-    // 1. Update state immediately (Optimistic UI)
+    // 1. Update state immediately (Optimistic UI) & Save to local storage
+    setSessionVotedIds(prev => {
+      const newSet = new Set(prev).add(locationId);
+      AsyncStorage.setItem(`voted_ids_${tripId}`, JSON.stringify(Array.from(newSet))).catch(console.error);
+      return newSet;
+    });
     const nextIndex = currentIndex + 1;
     setCurrentIndex(nextIndex);
 
@@ -237,7 +261,8 @@ export const Phase1View = ({ tripId }: { tripId: string }) => {
         {locations.length > 0 ? (
           <>
             {locations.map((location, index) => {
-              if (index < currentIndex) return null;
+              // Keep currentIndex - 1 mounted so the swipe-off animation can finish
+              if (index < currentIndex - 1) return null;
               if (index > currentIndex + 2) return null;
 
               return (

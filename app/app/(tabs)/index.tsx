@@ -266,40 +266,6 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* All Trips Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Operations</Text>
-              <TouchableOpacity onPress={() => refetch()}>
-                <Text style={[styles.sectionTitle, { color: '#818cf8' }]}>Refresh</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {isLoading ? (
-              <View style={{ gap: 16 }}>
-                <Skeleton width="100%" height={240} borderRadius={24} />
-                <Skeleton width="100%" height={240} borderRadius={24} />
-              </View>
-            ) : trips.length > 0 ? (
-              <View style={{ gap: 16 }}>
-                {trips.map((trip, index) => renderTripCard(trip, index))}
-              </View>
-            ) : (
-              <Animated.View entering={FadeIn} style={styles.emptyState}>
-                <View style={styles.emptyIconCircle}>
-                  <Compass size={40} color="#1e293b" />
-                </View>
-                <Text style={styles.emptyTitle}>No trips yet</Text>
-                <Text style={styles.emptySubtitle}>Start by creating your first collaborative adventure.</Text>
-                <TouchableOpacity 
-                  onPress={() => router.push('/(auth)/create')}
-                  style={styles.emptyButton}
-                >
-                  <Text style={styles.emptyButtonText}>Create Trip</Text>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
-          </View>
 
           <View style={{ height: 100 }} />
         </ScrollView>

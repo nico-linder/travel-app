@@ -23,8 +23,8 @@ export default function ProfileScreen() {
       "Are you sure you want to log out?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
+        {
+          text: "Logout",
           style: "destructive",
           onPress: async () => {
             await supabase.auth.signOut();
@@ -57,9 +57,9 @@ export default function ProfileScreen() {
           {/* Profile Card */}
           <View style={styles.profileCard}>
             <View style={styles.avatarContainer}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80' }} 
-                style={styles.avatar} 
+              <Image
+                source={{ uri: '' }}
+                style={styles.avatar}
               />
               <TouchableOpacity style={styles.editAvatarButton}>
                 <Camera size={16} color="#fff" />
@@ -83,8 +83,8 @@ export default function ProfileScreen() {
                   <Moon size={20} color="#818cf8" />
                 </View>
                 <Text style={styles.settingLabel}>Dark Mode</Text>
-                <Switch 
-                  value={isDarkMode} 
+                <Switch
+                  value={isDarkMode}
                   onValueChange={setIsDarkMode}
                   trackColor={{ false: '#1e293b', true: '#818cf8' }}
                   thumbColor="#fff"
@@ -95,22 +95,14 @@ export default function ProfileScreen() {
                   <Bell size={20} color="#f43f5e" />
                 </View>
                 <Text style={styles.settingLabel}>Notifications</Text>
-                <Switch 
-                  value={notifications} 
+                <Switch
+                  value={notifications}
                   onValueChange={setNotifications}
                   trackColor={{ false: '#1e293b', true: '#f43f5e' }}
                   thumbColor="#fff"
                 />
               </View>
               <SettingItem icon={Globe} label="Language" value="English" color="#10b981" />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account &#38; Security</Text>
-            <View style={styles.group}>
-              <SettingItem icon={Shield} label="Privacy Policy" color="#fbbf24" />
-              <SettingItem icon={CreditCard} label="Payment Methods" color="#6366f1" />
             </View>
           </View>
 

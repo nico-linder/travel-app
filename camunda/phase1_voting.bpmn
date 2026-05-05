@@ -64,7 +64,7 @@
     <bpmn:sequenceFlow id="Flow_LoopBack" sourceRef="Activity_AddVote" targetRef="Gateway_Merge" />
   </bpmn:process>
   <bpmn:process id="Process_15zdw5l" isExecutable="false">
-    <bpmn:startEvent id="Event_0oa8gxh" name="Votes">
+    <bpmn:startEvent id="Event_0oa8gxh" name="User wants to voted">
       <bpmn:outgoing>Flow_19iursj</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:exclusiveGateway id="Gateway_11pu3kg" name="All Voted?">
@@ -120,12 +120,6 @@
         <di:waypoint x="390" y="550" />
         <di:waypoint x="445" y="550" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_LoopBack_di" bpmnElement="Flow_LoopBack">
-        <di:waypoint x="700" y="510" />
-        <di:waypoint x="700" y="470" />
-        <di:waypoint x="470" y="470" />
-        <di:waypoint x="470" y="525" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
         <di:waypoint x="495" y="550" />
         <di:waypoint x="550" y="550" />
@@ -134,6 +128,12 @@
         <di:waypoint x="586" y="550" />
         <di:waypoint x="650" y="550" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_LoopBack_di" bpmnElement="Flow_LoopBack">
+        <di:waypoint x="700" y="510" />
+        <di:waypoint x="700" y="470" />
+        <di:waypoint x="470" y="470" />
+        <di:waypoint x="470" y="525" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="BPMNShape_1jv4cb1" bpmnElement="Participant_1mor060" isHorizontal="true">
         <dc:Bounds x="151" y="80" width="729" height="250" />
         <bpmndi:BPMNLabel />
@@ -141,7 +141,7 @@
       <bpmndi:BPMNShape id="BPMNShape_0jpllk5" bpmnElement="Event_0oa8gxh">
         <dc:Bounds x="223" y="152" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="227" y="191" width="28" height="14" />
+          <dc:Bounds x="207" y="191" width="68" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_11pu3kg_di" bpmnElement="Gateway_11pu3kg" isMarkerVisible="true">

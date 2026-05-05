@@ -349,6 +349,22 @@ const styles = StyleSheet.create({
   },
   contextGhostText: { fontFamily: Fonts.sans, fontSize: 12, fontWeight: '600', color: Atlas.paper },
 
+  // Progress Bar
+  progressTrack: {
+    height: 6,
+    backgroundColor: Atlas.ink2,
+    borderRadius: 3,
+    overflow: 'hidden',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: Atlas.hairline,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Atlas.amber,
+    borderRadius: 3,
+  },
+
   // Settings tab
   tabView: { flex: 1, backgroundColor: Atlas.ink },
   settingsHeader: {
